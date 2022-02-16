@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-11.0.2">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/commons-codec-1.15.jar"/>
+	<classpathentry kind="lib" path="lib/bcprov-jdk15on-169.jar"/>
+	<classpathentry kind="lib" path="lib/LunaProvider.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.5.0.jar" sourcepath="lib/commons-cli-1.5.0-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/CvcIssuer/lib/commons-cli-1.5.0-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/bcpkix-jdk15on-169.jar"/>
+	<classpathentry kind="lib" path="lib/bcutil-jdk15on-169.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
