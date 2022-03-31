@@ -19,3 +19,16 @@ Run `ng generate component component-name` to generate a new component. You can 
     - pode utilizar `--dry-run` junto do comando para analisar o que será criado antes de executar efetivamente
     - utilizar `--export` em submodulos para que os componentes/diretivas sejam exportadas para outros modulos que o utilizem
     
+
+## exemplo step by step
+Exemplo da criação de um projeto, com um modulo shared, e dentro de shared um novo modulo de layout de formulario
+1. criando o projeto `ng new exemplo`
+2. criando o modulo shared `ng g module shared -m app`
+    - usamos `-m app` para vincular o modulo ao app principal
+3. criando o submodulo para o formulario `ng g module shared/form-layout -m shared`
+    - o nome com prefixo `shared/` para que seja criado dentro do diretorio shared por organização
+    - informamos `-m shared` para vincular o submodulo ao modulo shared
+4. criando o componente de formulario `ng g component -m shared/form-layout shared/form-layout/components/form-layout --export`
+    - usamos `-m shared/form-layout` para informar em qual modulo será vinculado o componente
+    - o parametro `--export` serve para que seja exportado pelo modulo
+    
