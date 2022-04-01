@@ -1,0 +1,14 @@
+<div>
+    <app-form-layout>
+        <div *mcMainView>
+            <h1>main view</h1>
+            <input type="button" value="add" (click)="addVal()">
+            <input type="button" value="remove" (click)="subVal($event)">
+            <input type="text" value="etc." (input)="txtChange($event)">
+        </div>
+        <div *mcSideView>
+            <h3>side view value = {{value.num}}</h3>
+            <span>text val: {{value.text}}</span>
+        </div>
+    </app-form-layout>
+</div>
