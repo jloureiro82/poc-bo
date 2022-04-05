@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { ExampleRequestAction } from '../../actions/example.action';
+import { exampleRequestAction } from '../../actions/example.action';
 
 @Component({
   selector: 'app-redux-page',
@@ -15,7 +15,7 @@ export class ReduxPageComponent implements OnInit {
   constructor(private store: Store<any>) { }
 
   doRequest() {
-    this.store.dispatch(new ExampleRequestAction(this.requestValue))
+    this.store.dispatch(exampleRequestAction({ payload: this.requestValue }))
   }
 
   ngOnInit(): void {

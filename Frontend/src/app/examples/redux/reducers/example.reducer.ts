@@ -1,22 +1,8 @@
-import { ExampleActions, ExampleActionTypes } from "../actions/example.action";
+import { createReducer, on } from "@ngrx/store";
+import { exampleFeedbackAction, exampleRequestAction } from "../actions/example.action";
 
-export function exampleReducer(state = {result: 'reducer'}, action: ExampleActions) {
-    switch(action.type) {
-        case ExampleActionTypes.EXAMPLE_REQUEST: {
-            return {
-                ...state, 
-                query: action.payload,
-                result: '',
-                loading: true
-            }
-        }
-        case ExampleActionTypes.EXAMAPLE_FEEDBACK: {
-            return {
-                ...state,
-                result: action.payload,
-                loading: false
-            }
-        }
-        default: return {...state}
-    }
-}
+export const exampleReducer = createReducer(
+    {result: 'reducer'},
+    on(exampleRequestAction, (state, {payload}) => ({ ...state, query: payload, result: '', loading: true })),
+    on(exampleFeedbackAction, (state, {payload}) => ({ ...state, result: payload, loading: false }))
+)
