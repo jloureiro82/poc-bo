@@ -32,3 +32,6 @@ Exemplo da criação de um projeto, com um modulo shared, e dentro de shared um 
     - usamos `-m shared/form-layout` para informar em qual modulo será vinculado o componente
     - o parametro `--export` serve para que seja exportado pelo modulo
     
+## Observations
+about ng generate:
+1. components devem informar `-m` module e `--export` caso precisem ser publicos (em relação ao modulo), services não possuem modulo (tree shaking, só existem se forem referenciados em algum arquivo), modules não possuem `--export` mas precisam fazer bind com outros modulos `-m <parent>` 
