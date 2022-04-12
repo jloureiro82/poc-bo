@@ -5,6 +5,8 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { SharedModule } from './shared/shared.module';
 import { ExamplesModule } from './examples/examples.module';
+import { EffectsModule } from '@ngrx/effects';
+import { StoreModule } from '@ngrx/store';
 
 @NgModule({
   declarations: [
@@ -14,7 +16,9 @@ import { ExamplesModule } from './examples/examples.module';
     BrowserModule,
     AppRoutingModule,
     SharedModule,
-    ExamplesModule
+    ExamplesModule,
+    EffectsModule.forRoot([]),
+    StoreModule.forRoot({}, {})
   ],
   providers: [],
   bootstrap: [AppComponent]
