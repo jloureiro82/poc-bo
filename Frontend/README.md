@@ -32,6 +32,15 @@ Exemplo da criação de um projeto, com um modulo shared, e dentro de shared um 
     - usamos `-m shared/form-layout` para informar em qual modulo será vinculado o componente
     - o parametro `--export` serve para que seja exportado pelo modulo
     
+
+## Project Specific Setup: Dynamic Grid Sample
+1. First import json collection (file located at: `collections/Angular Onboarding Mocks.postman_collection.json`) on postman app to mock an API.
+2. At this moment we have 2 endpoints:
+    - /api/client/1/order/654/doc/representative
+    - /api/client/1/order/654/doc/entity-responsable
+3. For the endpoint `representative` you can try 2 examples changing order id to `123` or `654` on `representative.service`.
+4. For the endpoint `entity-responsable` you can try 1 example changing order id to `123` on `entity-responsable.service`.
+
 ## Observations
 about ng generate:
 1. components devem informar `-m` module e `--export` caso precisem ser publicos (em relação ao modulo), services não possuem modulo (tree shaking, só existem se forem referenciados em algum arquivo), modules não possuem `--export` mas precisam fazer bind com outros modulos `-m <parent>` 
