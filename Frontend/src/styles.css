@@ -1,1 +1,76 @@
 /* You can add global styles to this file, and also import other style files */
+body, html {
+	height: 100%;
+	font-family: Poppins-Regular, sans-serif;
+}
+* {
+	margin: 0px; 
+	padding: 0px; 
+	box-sizing: border-box;
+}
+
+@font-face {
+  font-family: Poppins-Regular;
+  src: url('./fonts/poppins/Poppins-Regular.ttf'); 
+}
+
+@font-face {
+  font-family: Poppins-Bold;
+  src: url('./fonts/poppins/Poppins-Bold.ttf'); 
+}
+
+@font-face {
+  font-family: Poppins-Medium;
+  src: url('./fonts/poppins/Poppins-Medium.ttf'); 
+}
+
+@font-face {
+  font-family: Montserrat-Bold;
+  src: url('./fonts/montserrat/Montserrat-Bold.ttf'); 
+}
+input {
+	outline: none;
+	border: none;
+}
+
+textarea {
+  outline: none;
+  border: none;
+}
+.text-center {
+  text-align: center;
+}
+
+.txt1 {
+  font-family: Poppins-Regular;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #999999;
+}
+
+.txt2 {
+  font-family: Poppins-Regular;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #666666;
+}
+.p-t-12 {
+  padding-top: 12px;
+}
+
+.p-t-136 {
+  padding-top: 136px;
+}
+
+a {
+  color: #007bff;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-text-decoration-skip: objects;
+}
+
+button {
+  outline: none !important;
+  border: none;
+  background: transparent;
+}
