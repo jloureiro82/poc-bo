@@ -3,7 +3,8 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  postmanApiUrl: 'https://8e782c64-16e3-47c6-b2be-fdb9186a31fa.mock.pstmn.io/api/'
 };
 
 /*

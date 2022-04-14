@@ -1,0 +1,43 @@
+.representative-main {
+    margin: 1px;
+    padding-bottom: 14px;
+}
+
+.representative-card {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.representative-header { 
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.representative-text {
+    padding-right: 5px;
+}
+
+.representative-block {
+    flex: 80%;
+}
+
+.upload-file {  
+    flex: 80%;
+    padding-bottom: 14px;
+}
+
+.status-main{ 
+    flex: 20%;
+}
+
+h5 {
+    font-size: 1em;
+    font-weight: bold;
+    padding: 2px;
+}
+
+.statusText {
+    font-size: 1em;
+    font: bold Georgia, serif;
+    font-weight: bold;
+}

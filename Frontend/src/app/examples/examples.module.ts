@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormLayoutSampleModule } from './form-layout-sample/form-layout-sample.module';
 import { ReduxModule } from './redux/redux.module';
 import { StoreServiceSampleModule } from './store-service-sample/store-service-sample.module';
+import { DynamicGridSampleModule } from './dynamic-grid-sample/dynamic-grid-sample.module';
 
 
 
@@ -12,7 +13,8 @@ import { StoreServiceSampleModule } from './store-service-sample/store-service-s
     CommonModule,
     FormLayoutSampleModule,
     ReduxModule,
-    StoreServiceSampleModule
+    StoreServiceSampleModule,
+    DynamicGridSampleModule
   ]
 })
 export class ExamplesModule { }
