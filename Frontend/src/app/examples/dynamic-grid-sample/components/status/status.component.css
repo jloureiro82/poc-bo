@@ -1,0 +1,36 @@
+.status-container {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.statusText {
+    font-size: 1em;
+    font: bold Georgia, serif;
+    font-weight: bold;
+}
+
+.status-text-card {  
+    flex: 60%;
+}
+
+.status-icon { 
+    flex: 40%;
+}
+
+.red {
+    color: red;
+}
+
+.orange {
+    color: orange;
+}
+
+.green {
+    color: green;
+}
+
+h5 {
+    margin: 0px;
+}

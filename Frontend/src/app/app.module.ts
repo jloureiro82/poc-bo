@@ -7,6 +7,7 @@ import { SharedModule } from './shared/shared.module';
 import { ExamplesModule } from './examples/examples.module';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreModule } from '@ngrx/store';
+import { HttpClientModule, HttpClientXsrfModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -17,6 +18,11 @@ import { StoreModule } from '@ngrx/store';
     AppRoutingModule,
     SharedModule,
     ExamplesModule,
+    HttpClientModule,
+    HttpClientXsrfModule.withOptions({
+      cookieName: 'My-Xsrf-Cookie',
+      headerName: 'My-Xsrf-Header',
+    }),
     EffectsModule.forRoot([]),
     StoreModule.forRoot({}, {})
   ],

@@ -1,0 +1,24 @@
+<div class="entity-responsable-main">
+    <div class="entity-responsable-card" *ngFor="let entityResponsable of entityResponsables">
+        <div class="entity-responsable-block">
+            <div class="entity-responsable-header">
+                <div class="entity-responsable-text"><h5>Responsável da Entidade -</h5></div>
+                <div class="entity-responsable-name">{{entityResponsable.name}}</div>
+            </div>
+            <div class="entity-responsable-content" *ngIf="entityResponsable.fileName">
+                <div class="filename-item">{{entityResponsable.fileName}}</div>
+                <div class="authenticate-item"><h5>{{authenticated(entityResponsable.isAuthenticated)}}</h5></div>
+            </div>
+            <div class="upload-file" *ngIf="!entityResponsable.fileName">
+                <form>
+                    <div class="form-group">
+                      <input type="file" class="form-control-file" id="formControlFile1">
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="status-main">
+            <app-status [status]="entityResponsable.status!"></app-status>
+        </div>
+    </div>
+</div>
