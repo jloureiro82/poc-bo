@@ -4,6 +4,7 @@ import { FormLayoutSampleModule } from './form-layout-sample/form-layout-sample.
 import { ReduxModule } from './redux/redux.module';
 import { StoreServiceSampleModule } from './store-service-sample/store-service-sample.module';
 import { DynamicGridSampleModule } from './dynamic-grid-sample/dynamic-grid-sample.module';
+import { LoginSampleModule } from './login-sample/login-sample.module';
 
 
 
@@ -14,7 +15,9 @@ import { DynamicGridSampleModule } from './dynamic-grid-sample/dynamic-grid-samp
     FormLayoutSampleModule,
     ReduxModule,
     StoreServiceSampleModule,
-    DynamicGridSampleModule
+    DynamicGridSampleModule,
+    FormLayoutSampleModule,
+    LoginSampleModule
   ]
 })
 export class ExamplesModule { }
