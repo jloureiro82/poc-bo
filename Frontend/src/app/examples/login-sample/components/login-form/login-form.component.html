@@ -1,11 +1,11 @@
-
-    <form class="login100-form validate-form" (submit)="doSubmit($event)" #form>
+<div *ngIf="!logged">
+    <form class="login100-form validate-form" (submit)="doSubmit($event)" [formGroup]="form">
         <span class="login100-form-title">
             Member Login
         </span>
 
-        <app-text-input name="email" placeholder="Email" symbol="envelope" validate="Valid email is required: ex@abc.xyz" [appFormField]="email"></app-text-input>
-        <app-text-input type="password" name="password" placeholder="Password" symbol="lock" validate="Password is required" [appFormField]="password"></app-text-input>
+        <app-text-input name="email" placeholder="Email" symbol="envelope" validate="Valid email is required: ex@abc.xyz" [appForm]="form"></app-text-input>
+        <app-text-input type="password" name="password" placeholder="Password" symbol="lock" validate="Password is required" [appForm]="form"></app-text-input>
         
         <app-submit-button></app-submit-button>
 
@@ -25,3 +25,7 @@
             </a>
         </div>
     </form>
+</div>
+<div *ngIf="logged">
+    <app-submit-button (click)="doLogout()" title="Logout"></app-submit-button>
+</div>
