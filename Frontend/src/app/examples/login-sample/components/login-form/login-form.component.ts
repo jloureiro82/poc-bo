@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
+import { LoginService } from '../../services/login.service';
 
 const EMAIL_REGEX = /^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{1,5}|[0-9]{1,3})(\]?)$/
 
@@ -10,21 +11,25 @@ const EMAIL_REGEX = /^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}
 })
 export class LoginFormComponent implements OnInit {
 
-  email = new FormControl('')
-  password = new FormControl('')
-  constructor() {
-    
+  public form = new FormGroup({
+    email: new FormControl(''),
+    password: new FormControl('')
+  })
 
+  public logged = false
+  constructor(private loginService: LoginService) {
+    loginService.loginObserver().subscribe(isLogged => this.logged = isLogged)
    }
+
   emailValidation() {
-    if (this.email.value.trim().match(EMAIL_REGEX) == null) {
+    if (this.form.get('email')?.value.trim().match(EMAIL_REGEX) === null) {
       return {invalid: true}
     }
     return null
   }
 
   passwordValidation() {
-    if(this.password.value.trim() == ''){
+    if(this.form.get('password')?.value.trim() === ''){
       return {invalid: true};
     }
     return null
@@ -35,9 +40,16 @@ export class LoginFormComponent implements OnInit {
 
   doSubmit(event: SubmitEvent) {
     event.preventDefault()
-    this.email.setErrors(this.emailValidation())
-    this.password.setErrors(this.passwordValidation())
-    console.log(this.email)
+    this.form.get('email')?.setErrors(this.emailValidation())
+    this.form.get('password')?.setErrors(this.passwordValidation())
+    console.log(this.form)
+    if (this.form.valid) {
+      this.loginService.doLogin(this.form.value).subscribe()
+    }
+  }
+
+  doLogout() {
+    this.loginService.doLogout()
   }
 
 }

@@ -1,5 +1,5 @@
-<div class="wrap-input100 validate-input" [ngClass]="{'alert-validate': !isValid()}">
-    <input class="input100" type="{{type}}" name="{{name}}" [formControl]="formControl" placeholder="{{placeholder}}" #input>
+<div class="wrap-input100 validate-input" [ngClass]="{'alert-validate': !isValid()}" [formGroup]="appForm">
+    <input class="input100" type="{{type}}" name="{{name}}" [formControlName]="name" placeholder="{{placeholder}}" #input>
     <span class="focus-input100"></span>
     <span class="symbol-input100">
         <i class="fa fa-{{symbol}}" aria-hidden="true"></i>

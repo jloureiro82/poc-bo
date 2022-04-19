@@ -17,7 +17,7 @@ import { LoginSampleModule } from './login-sample/login-sample.module';
     StoreServiceSampleModule,
     DynamicGridSampleModule,
     FormLayoutSampleModule,
-    LoginSampleModule
+    LoginSampleModule,
   ]
 })
 export class ExamplesModule { }
