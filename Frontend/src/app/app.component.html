@@ -15,11 +15,9 @@
             POCs
           </a>
           <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <a class="dropdown-item" href="/dynamic-grid-sample">Dynamic Grid Sample</a>
-            <a class="dropdown-item" href="/form-layout-sample">Form Layout Sample</a>
-            <a class="dropdown-item" href="/store-service">Store Service</a>
-            <a class="dropdown-item" href="/redux">Redux</a>
-            <a class="dropdown-item" href="/login-sample">Login Sample</a>
+            <div *ngFor="let route of routes"> 
+              <a class="dropdown-item" routerLink="/{{route.path}}">{{route.path}}</a>
+            </div>
           </div>
         </li>
       </ul>
