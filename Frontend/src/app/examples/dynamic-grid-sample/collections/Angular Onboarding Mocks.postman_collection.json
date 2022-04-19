@@ -61,7 +61,7 @@
 							"expires": "Invalid Date"
 						}
 					],
-					"body": "[\r\n    {\r\n        \"name\": \"José Manuel Antunes Andrade\",\r\n        \"fileName\": \"\",\r\n        \"status\": \"Por submeter\",\r\n        \"authenticate\": \"false\"\r\n    }\r\n]"
+					"body": "[\r\n    {\r\n        \"name\": \"José Manuel Antunes Andrade\",\r\n        \"fileName\": \"\",\r\n        \"status\": \"Por submeter\",\r\n        \"isAuthenticated\": false\r\n    }\r\n]"
 				},
 				{
 					"name": "E2",
@@ -95,7 +95,7 @@
 							"expires": "Invalid Date"
 						}
 					],
-					"body": "[\n    {\n        \"name\": \"Maria Oliveira\",\n        \"fileName\": \"{{$randomFileName}}\",\n        \"status\": \"Validado\",\n        \"authenticate\": \"false\"\n    }\n]"
+					"body": "[\n    {\n        \"name\": \"Maria Oliveira\",\n        \"fileName\": \"{{$randomFileName}}\",\n        \"status\": \"Validado\",\n        \"isAuthenticated\": true\n    }\n]"
 				}
 			]
 		},
@@ -127,6 +127,34 @@
 						"method": "GET",
 						"header": [],
 						"url": {
+							"raw": "https://postman-echo.com/api/client/1/order/123/doc/entity-responsable",
+							"protocol": "https",
+							"host": [
+								"postman-echo",
+								"com"
+							],
+							"path": [
+								"api",
+								"client",
+								"1",
+								"order",
+								"123",
+								"doc",
+								"entity-responsable"
+							]
+						}
+					},
+					"_postman_previewlanguage": "json",
+					"header": null,
+					"cookie": [],
+					"body": "[\r\n    {\r\n        \"name\": \"Rui Ramos Silva Lopes\",\r\n        \"fileName\": \"{{$randomFileName}}\",\r\n        \"status\": \"Em analise\",\r\n        \"isAuthenticated\": true\r\n    },\r\n    {\r\n        \"name\": \"Paulo Pires\",\r\n        \"fileName\": \"{{$randomFileName}}\",\r\n        \"status\": \"asd\",\r\n        \"isAuthenticated\": false\r\n    }\r\n    ,\r\n    {\r\n        \"name\": \"João Cunha da Silva\",\r\n        \"fileName\": \"\",\r\n        \"status\": \"Por submeter\",\r\n        \"isAuthenticated\": false\r\n    },\r\n    {\r\n        \"name\": \"Dunha Silva\",\r\n        \"fileName\": \"{{$randomFileName}}\",\r\n        \"status\": \"Por submeter\",\r\n        \"isAuthenticated\": true\r\n    }\r\n]"
+				},
+				{
+					"name": "E2",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
 							"raw": "https://postman-echo.com/api/client/1/order/654/doc/entity-responsable",
 							"protocol": "https",
 							"host": [
@@ -153,7 +181,7 @@
 							"expires": "Invalid Date"
 						}
 					],
-					"body": "[\n    {\n        \"name\": \"Rui Ramos Silva Lopes\",\n        \"fileName\": \"{{$randomFileName}}\",\n        \"status\": \"Em analise\",\n        \"authenticate\": \"true\"\n    },\n    {\n        \"name\": \"Paulo Pires\",\n        \"fileName\": \"{{$randomFileName}}\",\n        \"status\": \"Validado\",\n        \"authenticate\": \"false\"\n    }\n    ,\n    {\n        \"name\": \"João Cunha da Silva\",\n        \"fileName\": \"\",\n        \"status\": \"Por submeter\",\n        \"authenticate\": \"false\"\n    }\n]"
+					"body": "[]"
 				}
 			]
 		},
@@ -184,32 +212,4 @@
 			},
 			"response": []
 		},
-		{
-			"name": "Doc entity responsable",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "https://8e782c64-16e3-47c6-b2be-fdb9186a31fa.mock.pstmn.io/api/client/1/order/654/doc/entity-responsable",
-					"protocol": "https",
-					"host": [
-						"8e782c64-16e3-47c6-b2be-fdb9186a31fa",
-						"mock",
-						"pstmn",
-						"io"
-					],
-					"path": [
-						"api",
-						"client",
-						"1",
-						"order",
-						"654",
-						"doc",
-						"entity-responsable"
-					]
-				}
-			},
-			"response": []
-		}
-	]
-}
+	

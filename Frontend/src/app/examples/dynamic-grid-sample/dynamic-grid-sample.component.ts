@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { EntityResponsableService } from './services/entity-responsable/entity-responsable.service';
+import { RepresentativeService } from './services/representative/representative.service';
 
 @Component({
   selector: 'app-dynamic-grid-sample',
@@ -7,9 +9,16 @@ import { Component, OnInit } from '@angular/core';
 })
 export class DynamicGridSampleComponent implements OnInit {
 
-  constructor() { }
+  public selectedOrder!: String;
+
+  constructor(private representativeService: RepresentativeService,
+    private entityResponsableService: EntityResponsableService) { }
 
   ngOnInit(): void {
+  }
+
+  onOrderChange(orderNumber: String) {
+    this.selectedOrder = orderNumber;
   }
 
 }

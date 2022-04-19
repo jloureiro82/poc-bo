@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { RepresentativeModel } from 'src/app/shared/dynamic-grid/models/RepresentativeModel';
+import { RepresentativeModel } from 'src/app/examples/dynamic-grid-sample/models/RepresentativeModel';
 import { HandleError, HttpErrorHandler } from 'src/app/shared/handlers/http-error-handler/http-error-handler.service';
 import { catchError, Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -9,7 +9,7 @@ import { environment } from 'src/environments/environment';
   providedIn: 'root'
 })
 export class RepresentativeService {
-  url = environment.postmanApiUrl + 'client/1/order/654/doc/representative'
+  url = "";
   private handleError: HandleError;
 
   constructor(private http: HttpClient,
@@ -22,5 +22,9 @@ export class RepresentativeService {
     .pipe(
       catchError(this.handleError('getRepresentative', []))
     )
+  }
+
+  setOrder(orderNumber: String): void {
+    this.url =  environment.postmanApiUrl + 'client/1/order/'+ orderNumber +'/doc/representative';
   }
 }

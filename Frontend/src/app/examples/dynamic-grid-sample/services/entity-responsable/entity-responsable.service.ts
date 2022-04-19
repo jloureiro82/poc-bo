@@ -3,13 +3,13 @@ import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { Observable, catchError } from 'rxjs';
 import { HandleError, HttpErrorHandler } from '../../../../shared/handlers/http-error-handler/http-error-handler.service';
-import { EntityResponsableModel } from 'src/app/shared/dynamic-grid/models/EntityResponsableModel';
+import { EntityResponsableModel } from 'src/app/examples/dynamic-grid-sample/models/EntityResponsableModel';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EntityResponsableService {
-  url = environment.postmanApiUrl + 'client/1/order/123/doc/entity-responsable'
+  url = "";
   private handleError: HandleError;
 
   constructor(private http: HttpClient,
@@ -22,5 +22,9 @@ export class EntityResponsableService {
     .pipe(
       catchError(this.handleError('getEntityResponsableService', []))
     )
+  }
+
+  setOrder(orderNumber: String): void {
+    this.url =  environment.postmanApiUrl + 'client/1/order/'+ orderNumber +'/doc/entity-responsable';
   }
 }
