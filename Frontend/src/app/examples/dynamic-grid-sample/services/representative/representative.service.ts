@@ -25,6 +25,6 @@ export class RepresentativeService {
   }
 
   setOrder(orderNumber: String): void {
-    this.url =  environment.postmanApiUrl + 'client/1/order/'+ orderNumber +'/doc/representative';
+    this.url =  environment.backendApiUrl + 'client/1/order/'+ orderNumber +'/doc/representative';
   }
 }
