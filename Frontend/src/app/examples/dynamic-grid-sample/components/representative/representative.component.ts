@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { RepresentativeModel } from 'src/app/shared/dynamic-grid/models/RepresentativeModel';
+import { Component, Input, OnInit, SimpleChange, SimpleChanges } from '@angular/core';
+import { RepresentativeModel } from '../../models/RepresentativeModel';
 import { RepresentativeService } from '../../services/representative/representative.service';
 
 @Component({
@@ -12,16 +12,27 @@ export class RepresentativeComponent implements OnInit {
 
   constructor(private representativeService: RepresentativeService) { }
 
+  @Input()
+  order!: String;
+
   ngOnInit() {
+    this.representativeService.setOrder("123");
     this.getRepresentative()
+  }
+
+  ngOnChanges() {
+    if(this.order != undefined){
+      this.representativeService.setOrder(this.order);
+      this.getRepresentative();
+    }
   }
 
   getRepresentative(): void {
     this.representativeService.getRepresentative().subscribe(representative => (this.representatives = representative))
   }
 
-  authenticated(authenticated: Boolean) {
-    if(authenticated) {
+  getDocAuthenticationText(isAuthenticated: Boolean) {
+    if(isAuthenticated) {
       return "Autenticado"
     }
 

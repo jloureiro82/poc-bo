@@ -38,8 +38,7 @@ Exemplo da criação de um projeto, com um modulo shared, e dentro de shared um 
 2. At this moment we have 2 endpoints:
     - /api/client/1/order/654/doc/representative
     - /api/client/1/order/654/doc/entity-responsable
-3. For the endpoint `representative` you can try 2 examples changing order id to `123` or `654` on `representative.service`.
-4. For the endpoint `entity-responsable` you can try 1 example changing order id to `123` on `entity-responsable.service`.
+3. Both `representative` and `entity-responsable` endpoint you can try changing order id to `123` or `654` by clicking on dropdown and selecting the order number. It should return diffrent results where one should return an empty list for entity-resposable.
 
 ## Observations
 about ng generate:

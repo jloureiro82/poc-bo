@@ -6,7 +6,7 @@ import { ReduxPageComponent } from './examples/redux/components/redux-page/redux
 import { StoreServiceSampleComponent } from './examples/store-service-sample/store-service-sample.component';
 import { LoginSampleComponent } from './examples/login-sample/login-sample.component';
 
-const routes: Routes = [
+export const routes: Routes = [
   { path: 'form-layout-sample', component: FormLayoutSampleComponent },
   { path: 'dynamic-grid-sample', component: DynamicGridSampleComponent },
   { path: 'redux', component: ReduxPageComponent },

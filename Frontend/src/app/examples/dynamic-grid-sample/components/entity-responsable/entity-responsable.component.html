@@ -7,7 +7,7 @@
             </div>
             <div class="entity-responsable-content" *ngIf="entityResponsable.fileName">
                 <div class="filename-item">{{entityResponsable.fileName}}</div>
-                <div class="authenticate-item"><h5>{{authenticated(entityResponsable.isAuthenticated)}}</h5></div>
+                <div class="authenticate-item"><h5>{{getDocAuthenticationText(entityResponsable.isAuthenticated)}}</h5></div>
             </div>
             <div class="upload-file" *ngIf="!entityResponsable.fileName">
                 <form>

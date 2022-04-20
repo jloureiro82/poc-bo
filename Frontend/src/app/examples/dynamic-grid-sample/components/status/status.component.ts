@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { StatusEnum } from './enums/StatusEnum';
 
-type ClassName = 'red' | 'orange' | 'green';
+type ClassName = 'red' | 'orange' | 'green' | 'grey';
 
 @Component({
   selector: 'app-status',
@@ -8,9 +9,7 @@ type ClassName = 'red' | 'orange' | 'green';
   styleUrls: ['./status.component.css']
 })
 export class StatusComponent implements OnInit {
-  applyColor: String = ''
-
-  className: ClassName = 'red';
+  className!: ClassName;
  
    @Input()
    status!: String;
@@ -20,11 +19,14 @@ export class StatusComponent implements OnInit {
    }
  
    private mapValToClass(val: String): ClassName {
-     if(val === 'Por submeter') {
+     if(val === StatusEnum.TO_SUBMIT.valueOf()) {
        return 'red';
-     } else if(val === 'Em analise') {
+     } else if(val === StatusEnum.IN_ANALISYS.valueOf()) {
        return 'orange';
+     } else if(val === StatusEnum.VALIDATED.valueOf()) {
+       return 'green';
      }
-     return 'green';
+     this.status = StatusEnum.NOT_FOUND;
+     return 'grey';
    }
 }
