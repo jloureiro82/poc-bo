@@ -25,6 +25,6 @@ export class EntityResponsableService {
   }
 
   setOrder(orderNumber: String): void {
-    this.url =  environment.postmanApiUrl + 'client/1/order/'+ orderNumber +'/doc/entity-responsable';
+    this.url =  environment.backendApiUrl + 'client/1/order/'+ orderNumber +'/doc/entity-responsable';
   }
 }
