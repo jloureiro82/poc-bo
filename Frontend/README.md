@@ -34,11 +34,10 @@ Exemplo da criação de um projeto, com um modulo shared, e dentro de shared um 
     
 
 ## Project Specific Setup: Dynamic Grid Sample
-1. First import json collection (file located at: `collections/Angular Onboarding Mocks.postman_collection.json`) on postman app to mock an API.
-2. At this moment we have 2 endpoints:
-    - /api/client/1/order/654/doc/representative
-    - /api/client/1/order/654/doc/entity-responsable
-3. Both `representative` and `entity-responsable` endpoint you can try changing order id to `123` or `654` by clicking on dropdown and selecting the order number. It should return diffrent results where one should return an empty list for entity-resposable.
+1. First install `node` in your machine. 
+2. Open a cmd terminal and go to the folder NodeServer(located at: dynamic-grid-sample module)
+3. For the first time run: `npm install dynamic-grid-sample`
+4. Then run `npm start`
 
 ## Observations
 about ng generate:
