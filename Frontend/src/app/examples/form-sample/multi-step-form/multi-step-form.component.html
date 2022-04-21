@@ -1,0 +1,11 @@
+<div>
+  <div class="content">
+    <ng-template [ngTemplateOutlet]="getStepTemplate()" #render></ng-template>
+  </div>
+  <div>
+      <button (click)="backStep()" *ngIf="stepIndex > 0">{{getTitleOf(stepIndex -1)}}</button>
+      <button (click)="nextStep()" *ngIf="!isLastStep()">{{getTitleOf(stepIndex +1)}}</button>
+      <button *ngIf="isLastStep()">Submit</button>
+  </div>
+  <div class="progress"></div>
+</div>

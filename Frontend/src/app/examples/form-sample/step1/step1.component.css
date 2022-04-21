@@ -1,0 +1,20 @@
+.form-row {
+    margin-bottom: 26px;
+  }
+  
+  .form-row.form-group {
+    display: flex;
+  }
+  
+  .form-row.form-group .form-holder {
+    width: 50%;
+    margin-right: 25px;
+  }
+  
+  .form-row.form-group .form-holder:last-child {
+    margin-right: 0;
+  }
+  .form-holder {
+    position: relative;
+  }
+  
