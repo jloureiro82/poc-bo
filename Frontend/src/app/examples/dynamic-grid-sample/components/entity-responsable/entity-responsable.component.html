@@ -21,4 +21,7 @@
             <app-status [status]="entityResponsable.status!"></app-status>
         </div>
     </div>
+    <div *ngIf="isEndpointReturnedError">
+        <p>Api do backend falhou, verifique o ficheiro README para configurar o servidor node.</p>
+    </div>
 </div>

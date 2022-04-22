@@ -1,7 +1,10 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { CertificateInvoicingService } from 'src/app/shared/certificate-invoicing/certificate-invoicing.service';
 import { EntityResponsableModel } from '../../models/EntityResponsableModel';
 import { EntityResponsableService } from '../../services/entity-responsable/entity-responsable.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-entity-responsable',
@@ -12,35 +15,34 @@ import { EntityResponsableService } from '../../services/entity-responsable/enti
 export class EntityResponsableComponent implements OnInit {
   entityResponsables: EntityResponsableModel[] = [];
 
-  public store$ = this.certificateInvoicingService.getObserver();
-
   @Input()
   order!: String;
+  isEndpointReturnedError: boolean = false;
 
-  constructor(private certificateInvoicingService: CertificateInvoicingService, 
-    private entityResponsableService: EntityResponsableService) {console.log("Batata "+this.getRepresentative())}
+  constructor(private entityResponsableService: EntityResponsableService) {}
 
   ngOnInit() {
-    // this.entityResponsableService.setOrder("123");
     this.order = "123";
-    console.log(this.getRepresentative())
     this.getRepresentative()
   }
 
   ngOnChanges() {
-    console.log("Selected order: "+this.certificateInvoicingService.selectedOrder)
     if (this.order !== undefined) {
-      // this.entityResponsableService.setOrder(this.order);
       this.getRepresentative();
     }
   }
 
   getRepresentative(): void {
-    this.entityResponsableService
-      .getEntityResponsable(this.order)
-      .subscribe(entityResponsable => (
-        entityResponsable !== undefined && entityResponsable.length > 0 ? this.entityResponsables = entityResponsable : this.entityResponsables = []
-      ))
+    try{
+      this.entityResponsableService
+        .getEntityResponsable(this.order)
+        .subscribe(entityResponsable => (
+          entityResponsable !== undefined && entityResponsable.length > 0 ? this.entityResponsables = entityResponsable : this.entityResponsables = []
+        ))
+    } catch (error) { 
+      console.log(error)
+      this.isEndpointReturnedError = true;
+    }
   }
 
   getDocAuthenticationText(isAuthenticated: Boolean): String {
