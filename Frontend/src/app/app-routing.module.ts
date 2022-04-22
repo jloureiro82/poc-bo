@@ -10,12 +10,17 @@ import { EntityDataComponent } from './examples/certificate-invoicing-sample/com
 import { IdentityValidationComponent } from './examples/certificate-invoicing-sample/components/identity-validation/identity-validation.component';
 import { PaymentComponent } from './examples/certificate-invoicing-sample/components/payment/payment.component';
 import { RepresentativeDataComponent } from './examples/certificate-invoicing-sample/components/representative-data/representative-data.component';
+import { InternationalizationSampleComponent } from './examples/internationalization-sample/internationalization-sample.component';
+import { FormSampleComponent } from './examples/form-sample/form-sample.component';
 
 export const routes: Routes = [
   { path: 'form-layout-sample', component: FormLayoutSampleComponent },
   { path: 'redux', component: ReduxPageComponent },
+  { path: 'dynamic-grid-sample', component: DynamicGridSampleComponent },
+  { path: 'internationalization-sample', component: InternationalizationSampleComponent },
   { path: 'store-service', component: StoreServiceSampleComponent },
   { path: 'login-sample', component: LoginSampleComponent },
+  { path: 'form-sample', component: FormSampleComponent},
   {
     path: "certificate-invoicing-sample",
     component: CertificateInvoicingSampleComponent,
