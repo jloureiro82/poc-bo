@@ -6,11 +6,14 @@ import { StoreServiceSampleModule } from './store-service-sample/store-service-s
 import { DynamicGridSampleModule } from './dynamic-grid-sample/dynamic-grid-sample.module';
 import { LoginSampleModule } from './login-sample/login-sample.module';
 import { FormSampleModule } from './form-sample/form-sample.module';
-
+import { InternationalizationSampleModule } from './internationalization-sample/internationalization-sample.module';
+import { InternationalizationSampleComponent } from './internationalization-sample/internationalization-sample.component';
 
 
 @NgModule({
-  declarations: [],
+  declarations: [
+    InternationalizationSampleComponent
+  ],
   imports: [
     CommonModule,
     FormLayoutSampleModule,
@@ -19,6 +22,7 @@ import { FormSampleModule } from './form-sample/form-sample.module';
     DynamicGridSampleModule,
     LoginSampleModule,
     FormSampleModule,
+    InternationalizationSampleModule,
   ]
 })
 export class ExamplesModule { }
