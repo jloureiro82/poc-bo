@@ -6,7 +6,6 @@ import { StoreServiceSampleModule } from './store-service-sample/store-service-s
 import { DynamicGridSampleModule } from './dynamic-grid-sample/dynamic-grid-sample.module';
 import { LoginSampleModule } from './login-sample/login-sample.module';
 import { CertificateInvoicingModule } from './certificate-invoicing/certificate-invoicing.module';
-import { CertificateInvoicingComponent } from './certificate-invoicing/certificate-invoicing.component';
 
 
 

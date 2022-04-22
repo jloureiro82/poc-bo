@@ -8,17 +8,11 @@ import { RepresentativeService } from './services/representative/representative.
   styleUrls: ['./dynamic-grid-sample.component.css']
 })
 export class DynamicGridSampleComponent implements OnInit {
+   public selectedOrder!: String;
 
-  public selectedOrder!: String;
-
-  constructor(private representativeService: RepresentativeService,
-    private entityResponsableService: EntityResponsableService) { }
+  constructor() { }
 
   ngOnInit(): void {
-  }
-
-  onOrderChange(orderNumber: String) {
-    this.selectedOrder = orderNumber;
   }
 
 }

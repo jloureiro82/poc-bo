@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormLayoutModule } from './form-layout/form-layout.module';
 import { HandlersModule } from './handlers/handlers.module';
 import { MessagesModule } from './messages/messages.module';
+import { CertificateInvoicingModule } from './certificate-invoicing/certificate-invoicing.module';
 
 
 
@@ -12,7 +13,8 @@ import { MessagesModule } from './messages/messages.module';
     CommonModule,
     FormLayoutModule,
     HandlersModule,
-    MessagesModule
+    MessagesModule,
+    CertificateInvoicingModule
   ],
   exports: [
     FormLayoutModule
