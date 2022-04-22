@@ -1,4 +1,5 @@
-import { Component, Input, OnInit, SimpleChange, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { CertificateInvoicingService } from 'src/app/shared/certificate-invoicing/certificate-invoicing.service';
 import { RepresentativeModel } from '../../models/RepresentativeModel';
 import { RepresentativeService } from '../../services/representative/representative.service';
 
@@ -9,30 +10,34 @@ import { RepresentativeService } from '../../services/representative/representat
 })
 export class RepresentativeComponent implements OnInit {
   representatives: RepresentativeModel[] = [];
-
-  constructor(private representativeService: RepresentativeService) { }
-
+  
   @Input()
   order!: String;
 
+  constructor(private representativeService: RepresentativeService, 
+    private certificateInvoicingService: CertificateInvoicingService) {}
+
+
   ngOnInit() {
-    this.representativeService.setOrder("123");
+    this.order ='123'
     this.getRepresentative()
   }
 
   ngOnChanges() {
-    if(this.order != undefined){
-      this.representativeService.setOrder(this.order);
+    this.certificateInvoicingService.selectedOrder.subscribe((orderId) => {
+      this.order = orderId;
       this.getRepresentative();
-    }
+    });
   }
 
   getRepresentative(): void {
-    this.representativeService.getRepresentative().subscribe(representative => (this.representatives = representative))
+      this.representativeService
+        .getRepresentative(this.order)
+        .subscribe(representative => (this.representatives = representative))
   }
 
   getDocAuthenticationText(isAuthenticated: Boolean) {
-    if(isAuthenticated) {
+    if (isAuthenticated) {
       return "Autenticado"
     }
 

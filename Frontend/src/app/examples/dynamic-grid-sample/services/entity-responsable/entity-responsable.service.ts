@@ -17,14 +17,15 @@ export class EntityResponsableService {
       this.handleError = httpErrorHandler.createHandleError('EntityResponsableService');
     }
 
-  getEntityResponsable(): Observable<EntityResponsableModel[]> {
+  getEntityResponsable(orderId: String): Observable<EntityResponsableModel[]> {
+    this.setOrderToUrl(orderId)
     return this.http.get<EntityResponsableModel[]>(this.url)
     .pipe(
       catchError(this.handleError('getEntityResponsableService', []))
     )
   }
 
-  setOrder(orderNumber: String): void {
+  setOrderToUrl(orderNumber: String): void {
     this.url =  environment.backendApiUrl + 'client/1/order/'+ orderNumber +'/doc/entity-responsable';
   }
 }

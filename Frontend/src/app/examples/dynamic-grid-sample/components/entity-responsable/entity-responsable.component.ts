@@ -1,6 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { CertificateInvoicingService } from 'src/app/shared/certificate-invoicing/certificate-invoicing.service';
 import { EntityResponsableModel } from '../../models/EntityResponsableModel';
 import { EntityResponsableService } from '../../services/entity-responsable/entity-responsable.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-entity-responsable',
@@ -14,23 +18,24 @@ export class EntityResponsableComponent implements OnInit {
   @Input()
   order!: String;
 
-  constructor(private entityResponsableService: EntityResponsableService) {}
+  constructor(private entityResponsableService: EntityResponsableService, 
+    private certificateInvoicingService: CertificateInvoicingService) {}
 
   ngOnInit() {
-    this.entityResponsableService.setOrder("123");
-    this.getRepresentative()
+    this.order = '123';
+    this.getEntityResponsable()
   }
 
   ngOnChanges() {
-    if (this.order !== undefined) {
-      this.entityResponsableService.setOrder(this.order);
-      this.getRepresentative();
-    }
+    this.certificateInvoicingService.selectedOrder.subscribe((orderId) => {
+      this.order = orderId
+      this.getEntityResponsable()
+    });
   }
 
-  getRepresentative(): void {
+  getEntityResponsable(): void {
     this.entityResponsableService
-      .getEntityResponsable()
+      .getEntityResponsable(this.order)
       .subscribe(entityResponsable => (
         entityResponsable !== undefined && entityResponsable.length > 0 ? this.entityResponsables = entityResponsable : this.entityResponsables = []
       ))
@@ -39,8 +44,8 @@ export class EntityResponsableComponent implements OnInit {
   getDocAuthenticationText(isAuthenticated: Boolean): String {
     if (isAuthenticated) {
       return 'Autenticado'
-    } else {
-      return 'Não Autenticado'
     }
+      
+    return 'Não Autenticado'
   }
 }
