@@ -1,22 +1,23 @@
-import { Injectable } from '@angular/core';
+import { EventEmitter, Injectable, Output } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CertificateInvoicingService {
-  selectedOrder!: String
+  orderNumber!: string;
 
-  private store$ = new BehaviorSubject<any>({})
+  selectedOrder:EventEmitter<string> = new EventEmitter();
 
   constructor() { }
 
-  update(next: any) {
-    this.store$.next(next)
+  setSelectedOrder(orderId: string){
+    this.orderNumber = orderId;
+    this.selectedOrder.emit(orderId);
   }
 
-  getObserver() {
-    return this.store$.pipe()
+  getSelectedOrder(){
+    return this.orderNumber;
   }
 
 }

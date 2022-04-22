@@ -8,9 +8,6 @@ import { BehaviorSubject } from 'rxjs';
   styleUrls: ['./nav-bar.component.css']
 })
 export class NavBarComponent implements OnInit {
-  public selectedOrder!: String;
-
-  @Output() newItemEvent = new BehaviorSubject(this.selectedOrder);
 
   constructor(private certificateInvoicingService: CertificateInvoicingService) { }
 
@@ -18,14 +15,6 @@ export class NavBarComponent implements OnInit {
   }
 
   onOrderChange(orderNumber: string) {
-    // this.selectedOrder = orderNumber;
-    // this.certificateInvoicingService.update(orderNumber);
-     console.log(orderNumber);
-
-     //this.certificateInvoicingService.update(orderNumber);
-     // this.certificateInvoicingService.update(orderNumber);
-     
-     this.selectedOrder = orderNumber;
-     this.newItemEvent.next(this.selectedOrder);
+     this.certificateInvoicingService.setSelectedOrder(orderNumber);
   }
 }

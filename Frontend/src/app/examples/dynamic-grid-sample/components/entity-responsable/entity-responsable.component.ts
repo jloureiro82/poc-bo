@@ -17,39 +17,35 @@ export class EntityResponsableComponent implements OnInit {
 
   @Input()
   order!: String;
-  isEndpointReturnedError: boolean = false;
 
-  constructor(private entityResponsableService: EntityResponsableService) {}
+  constructor(private entityResponsableService: EntityResponsableService, 
+    private certificateInvoicingService: CertificateInvoicingService) {}
 
   ngOnInit() {
-    this.order = "123";
-    this.getRepresentative()
+    this.order = '123';
+    this.getEntityResponsable()
   }
 
   ngOnChanges() {
-    if (this.order !== undefined) {
-      this.getRepresentative();
-    }
+    this.certificateInvoicingService.selectedOrder.subscribe((orderId) => {
+      this.order = orderId
+      this.getEntityResponsable()
+    });
   }
 
-  getRepresentative(): void {
-    try{
-      this.entityResponsableService
-        .getEntityResponsable(this.order)
-        .subscribe(entityResponsable => (
-          entityResponsable !== undefined && entityResponsable.length > 0 ? this.entityResponsables = entityResponsable : this.entityResponsables = []
-        ))
-    } catch (error) { 
-      console.log(error)
-      this.isEndpointReturnedError = true;
-    }
+  getEntityResponsable(): void {
+    this.entityResponsableService
+      .getEntityResponsable(this.order)
+      .subscribe(entityResponsable => (
+        entityResponsable !== undefined && entityResponsable.length > 0 ? this.entityResponsables = entityResponsable : this.entityResponsables = []
+      ))
   }
 
   getDocAuthenticationText(isAuthenticated: Boolean): String {
     if (isAuthenticated) {
       return 'Autenticado'
-    } else {
-      return 'Não Autenticado'
     }
+      
+    return 'Não Autenticado'
   }
 }

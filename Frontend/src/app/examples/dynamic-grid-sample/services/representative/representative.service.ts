@@ -17,14 +17,15 @@ export class RepresentativeService {
       this.handleError = httpErrorHandler.createHandleError('RepresentativeService');
     }
 
-  getRepresentative(): Observable<RepresentativeModel[]> {
+  getRepresentative(orderId: String): Observable<RepresentativeModel[]> {
+    this.setOrderToUrl(orderId)
     return this.http.get<RepresentativeModel[]>(this.url)
     .pipe(
       catchError(this.handleError('getRepresentative', []))
     )
   }
 
-  setOrder(orderNumber: String): void {
+  setOrderToUrl(orderNumber: String): void {
     this.url =  environment.backendApiUrl + 'client/1/order/'+ orderNumber +'/doc/representative';
   }
 }
