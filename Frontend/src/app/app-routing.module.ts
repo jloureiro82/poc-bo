@@ -6,10 +6,12 @@ import { ReduxPageComponent } from './examples/redux/components/redux-page/redux
 import { StoreServiceSampleComponent } from './examples/store-service-sample/store-service-sample.component';
 import { LoginSampleComponent } from './examples/login-sample/login-sample.component';
 import { FormSampleComponent } from './examples/form-sample/form-sample.component';
+import { InternationalizationSampleComponent } from './examples/internationalization-sample/internationalization-sample.component';
 
 export const routes: Routes = [
   { path: 'form-layout-sample', component: FormLayoutSampleComponent },
   { path: 'dynamic-grid-sample', component: DynamicGridSampleComponent },
+  { path: 'internationalization-sample', component: InternationalizationSampleComponent },
   { path: 'redux', component: ReduxPageComponent },
   { path: 'store-service', component: StoreServiceSampleComponent },
   { path: 'login-sample', component: LoginSampleComponent },

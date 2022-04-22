@@ -39,6 +39,16 @@ Exemplo da criação de um projeto, com um modulo shared, e dentro de shared um 
 3. For the first time run: `npm install dynamic-grid-sample`
 4. Then run `npm start`
 
+## Internationalization:
+1. ng add @angular/localize
+2. Add `"i18n:extract": "ng xi18n --output-path src/locale"` to package.json, so you can run `npm run i18n:extract` to generate a xlf file
+3. Optionally can add into package.json:
+    -     "start:fr": "ng serve --configuration=fr",
+    -     "start:pt": "ng serve --configuration=pt",
+    -     "build:fr": "ng build --configuration=fr",
+    -     "build:pt": "ng build --configuration=pt",
+then you can run, for example: `npm run start:fr -- --port=4201` to test the translations.
+
 ## Observations
 about ng generate:
 1. components devem informar `-m` module e `--export` caso precisem ser publicos (em relação ao modulo), services não possuem modulo (tree shaking, só existem se forem referenciados em algum arquivo), modules não possuem `--export` mas precisam fazer bind com outros modulos `-m <parent>` 
