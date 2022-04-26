@@ -1,1 +1,34 @@
-<p>step2 works!</p>
+<div>
+    <a href="#" class="avartar">
+        <img src="assets/avartar.png" alt="">
+    </a>
+    <div class="form-row">
+        <app-form-dropdown [options]="genders" default="Gender" [formControl]="field('gender')"></app-form-dropdown>
+    </div>
+    <div class="form-row">
+        <app-form-dropdown [options]="languages" default="Language" [formControl]="field('language')"></app-form-dropdown>
+    </div>
+
+    <div class="form-row">
+        <app-form-input name="slogan" title="Slogan" [formControl]="field('slogan')"></app-form-input>
+    </div>
+    <div class="form-row form-group">
+        <div class="form-holder">
+            <app-form-input name="twitter" title="Twitter" [formControl]="field('twitter')" icon="twitter">
+            </app-form-input>
+        </div>
+        <div class="form-holder">
+            <app-form-input name="linkedin" title="Linkedin" [formControl]="field('linkedin')" icon="linkedin">
+            </app-form-input>
+        </div>
+    </div>
+    <div class="form-row form-group">
+        <div class="form-holder">
+            <app-form-input name="facebook" title="Facebook" [formControl]="field('facebook')" icon="facebook">
+            </app-form-input>
+        </div>
+        <div class="form-holder">
+            <app-form-input name="google" title="Google" [formControl]="field('google')" icon="google"></app-form-input>
+        </div>
+    </div>
+</div>

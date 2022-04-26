@@ -1,4 +1,4 @@
-import { AfterContentInit, Component, ContentChildren, EventEmitter, Output, QueryList } from '@angular/core';
+import { AfterContentInit, Component, ContentChildren, QueryList } from '@angular/core';
 import { FormStepDirective } from '../directives/form-step.directive';
 
 @Component({
@@ -6,20 +6,20 @@ import { FormStepDirective } from '../directives/form-step.directive';
   templateUrl: './multi-step-form.component.html',
   styleUrls: ['./multi-step-form.component.css']
 })
-export class MultiStepFormComponent {
+export class MultiStepFormComponent implements AfterContentInit {
 
   @ContentChildren(FormStepDirective) steps!: QueryList<FormStepDirective>
   public stepIndex = 0
-
   constructor() { }
+
+  ngAfterContentInit(): void {
+    this.steps.forEach(step => step)
+  }
 
   getStepTemplate() {
     return this.steps.get(this.stepIndex)?.templateRef || null
   }
 
-  getTitleOf(index: number) {
-    return this.steps.get(index)?.title || null
-  }
   isLastStep() {
     return (this.stepIndex +1) === this.steps.length
   }

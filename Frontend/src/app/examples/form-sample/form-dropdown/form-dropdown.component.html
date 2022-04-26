@@ -1,0 +1,9 @@
+<details class="select" #details>
+    <summary class="select-control">{{selected.name}}</summary>
+    <ul class="dropdown">
+        <li *ngFor="let item of options" (click)="select(item.id)">{{item.name}}</li>
+    </ul>
+</details>
+
+
+
