@@ -1,4 +1,4 @@
 <div class="form-holder">
-    <input type="text" class="form-control" placeholder="{{title}}" name="{{name}}" [formControl]="formField">
+    <input type="{{type}}" class="form-control" placeholder="{{title}}" name="{{name}}" [value]="value" (change)="inputChange($event)">
     <i class="zmdi zmdi-{{icon}}"></i>
 </div>

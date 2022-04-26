@@ -3,8 +3,9 @@
         <div class="wizard">
             <div class="inner">
                 <app-multi-step-form>
-                    <app-step1 *formStep="'Primeiro Step'"></app-step1>
-                    <div *formStep="'Segundo Step'">step 2</div>
+                    <app-step2 *formStep [form]="echoform('step2')"></app-step2>
+                    <app-step1 *formStep [form]="echoform('step1')"></app-step1>
+                    <div *formStep>step 2</div>
                 </app-multi-step-form>
             </div>
         </div>

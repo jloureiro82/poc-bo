@@ -17,4 +17,8 @@
   .form-holder {
     position: relative;
   }
-  
+  .avartar {
+    display: block;
+    text-align: center;
+    margin-bottom: 29px;
+  }
