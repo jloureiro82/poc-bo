@@ -1,4 +1,4 @@
-import { AfterContentInit, Component, ContentChildren, QueryList } from '@angular/core';
+import { AfterContentInit, Component, ContentChildren, Input, QueryList } from '@angular/core';
 import { FormStepDirective } from '../directives/form-step.directive';
 
 @Component({
@@ -10,6 +10,7 @@ export class MultiStepFormComponent implements AfterContentInit {
 
   @ContentChildren(FormStepDirective) steps!: QueryList<FormStepDirective>
   public stepIndex = 0
+  @Input('submit') submit = () => {}
   constructor() { }
 
   ngAfterContentInit(): void {
@@ -34,5 +35,9 @@ export class MultiStepFormComponent implements AfterContentInit {
 
   getProgress() {
     return (this.stepIndex+1) / this.steps.length
+  }
+
+  doSubmit() {
+    this.submit()
   }
 }

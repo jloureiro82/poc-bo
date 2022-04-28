@@ -8,7 +8,9 @@ import { FormInputComponent } from './form-input/form-input.component';
 import { MultiStepFormComponent } from './multi-step-form/multi-step-form.component';
 import { FormStepDirective } from './directives/form-step.directive';
 import { ReactiveFormsModule } from '@angular/forms';
-import { FormDropdownComponent } from './form-dropdown/form-dropdown.component';
+import { SharedModule } from 'src/app/shared/shared.module';
+import { MaterialModule } from './material.module';
+import { FormDatepickerComponent } from './form-datepicker/form-datepicker.component';
 
 
 
@@ -21,11 +23,13 @@ import { FormDropdownComponent } from './form-dropdown/form-dropdown.component';
     FormInputComponent,
     MultiStepFormComponent,
     FormStepDirective,
-    FormDropdownComponent
+    FormDatepickerComponent
   ],
   imports: [
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    SharedModule,
+    MaterialModule
   ],
   exports: [
     FormSampleComponent

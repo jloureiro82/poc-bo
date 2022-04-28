@@ -2,10 +2,9 @@
     <div class="wrapper">
         <div class="wizard">
             <div class="inner">
-                <app-multi-step-form>
+                <app-multi-step-form [submit]="submit()">
                     <app-step2 *formStep [form]="echoform('step2')"></app-step2>
                     <app-step1 *formStep [form]="echoform('step1')"></app-step1>
-                    <div *formStep>step 2</div>
                 </app-multi-step-form>
             </div>
         </div>

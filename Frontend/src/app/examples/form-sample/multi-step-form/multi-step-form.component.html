@@ -5,7 +5,7 @@
   <div>
       <button (click)="backStep()" *ngIf="stepIndex > 0">Back</button>
       <button (click)="nextStep()" *ngIf="!isLastStep()">Next</button>
-      <button *ngIf="isLastStep()">Submit</button>
+      <button (click)="doSubmit()" *ngIf="isLastStep()">Submit</button>
   </div>
   <div class="progress"></div>
 </div>

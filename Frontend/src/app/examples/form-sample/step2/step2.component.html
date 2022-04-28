@@ -3,12 +3,15 @@
         <img src="assets/avartar.png" alt="">
     </a>
     <div class="form-row">
-        <app-form-dropdown [options]="genders" default="Gender" [formControl]="field('gender')"></app-form-dropdown>
+        <mtc-form-dropdown [options]="genders" default="Gender" [formControl]="field('gender')"></mtc-form-dropdown>
     </div>
     <div class="form-row">
-        <app-form-dropdown [options]="languages" default="Language" [formControl]="field('language')"></app-form-dropdown>
+        <mtc-form-dropdown [options]="languages" default="Language" [formControl]="field('language')">
+        </mtc-form-dropdown>
     </div>
-
+    <div class="form-row">
+        <app-form-datepicker name="birthdate" title="Date of Birth" [formControl]="field('birthdate')"></app-form-datepicker>
+    </div>
     <div class="form-row">
         <app-form-input name="slogan" title="Slogan" [formControl]="field('slogan')"></app-form-input>
     </div>

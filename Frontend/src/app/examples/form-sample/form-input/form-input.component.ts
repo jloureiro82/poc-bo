@@ -34,7 +34,6 @@ export class FormInputComponent implements ControlValueAccessor {
   }
 
   writeValue(value: string): void {
-    console.log('input wv call from:'+this.value, value)
     this.value = value
   }
   registerOnChange(fn: any): void {
