@@ -1,6 +1,58 @@
+.root {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+.content {
+    position: relative;
+}
+
+.btn-holder {
+    height: 51px;
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+}
 button {
-    padding: 15px;
-    background-color: lightgray;
-    padding-left: 30px;
-    padding-right: 30px;
+    border: none;
+    display: inline-flex;
+    height: 51px;
+    width: 118px;
+    align-items: center;
+    color: #fff;
+    cursor: pointer;
+    padding-left: 28px;
+    font-size: 15px;
+    position: relative;
+    background: #333;
+}
+
+button.btn-back {
+    background: none;
+    border: 1px solid #333;
+    padding-left: 50px;
+    color: #333;
+}
+
+button.btn-back:before {
+    content: "\f2ea";
+    right: 77px;
+    font-family: Material-Design-Iconic-Font;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+button.btn-next {
+    position: absolute;
+    right: 0;
+}
+
+button.btn-next:after {
+    content: "\f2ee";
+    font-family: Material-Design-Iconic-Font;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 32px;
 }
