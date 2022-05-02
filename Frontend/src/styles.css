@@ -11,6 +11,14 @@ body, html {
 	box-sizing: border-box;
 }
 
+*:focus {
+  outline-style: none;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  box-shadow:
+    0 0 0 .2rem rgba(255, 255, 255, 0), /* use site bg color to create whitespace for faux focus ring */
+    0 0 0 .35rem rgba(255, 255, 255, 0) !important;
+}
 @font-face {
   font-family: Poppins-Regular;
   src: url('./fonts/poppins/Poppins-Regular.ttf'); 
