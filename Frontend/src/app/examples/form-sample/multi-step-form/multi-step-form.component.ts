@@ -9,11 +9,13 @@ import { FormStepDirective } from '../directives/form-step.directive';
 export class MultiStepFormComponent implements AfterContentInit {
 
   @ContentChildren(FormStepDirective) steps!: QueryList<FormStepDirective>
-  public stepIndex = 0
   @Input('submit') submit = () => {}
+  public stepIndex = 0
+  public valid = true
   constructor() { }
 
   ngAfterContentInit(): void {
+    //todo
     this.steps.forEach(step => step)
   }
 
@@ -26,7 +28,13 @@ export class MultiStepFormComponent implements AfterContentInit {
   }
 
   nextStep() {
-    this.stepIndex += 1
+    const step = this.steps.get(this.stepIndex)
+    if (step?.form.valid) {
+      this.valid = true
+      this.stepIndex += 1
+    } else {
+      this.valid = false
+    }
   }
 
   backStep() {

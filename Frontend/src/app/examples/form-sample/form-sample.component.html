@@ -3,8 +3,9 @@
         <div class="wizard">
             <div class="inner">
                 <app-multi-step-form [submit]="submit()">
-                    <app-step2 *formStep [form]="echoform('step2')"></app-step2>
-                    <app-step1 *formStep [form]="echoform('step1')"></app-step1>
+                    <app-step1 *formStep="echoform('step1')"></app-step1>
+                    <app-step2 *formStep="echoform('step2')"></app-step2>
+                    <app-step3 *formStep="echoform('step3')"></app-step3>
                 </app-multi-step-form>
             </div>
         </div>

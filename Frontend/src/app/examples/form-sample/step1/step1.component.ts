@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { Component } from '@angular/core';
+import { AbstractControl, FormGroup, ValidationErrors } from '@angular/forms';
+import { FormStepDirective } from '../directives/form-step.directive';
 
 @Component({
   selector: 'app-step1',
@@ -7,14 +8,10 @@ import { FormControl, FormGroup } from '@angular/forms';
   styleUrls: ['./step1.component.css']
 })
 export class Step1Component {
-  
-  @Input('form') form!: FormGroup
-
-  constructor() { }
-
-  field(name: string) {
-    const field = this.form?.get(name) as FormControl || new FormControl('')
-    this.form?.setControl(name, field)
-    return field
-  }
+  constructor(public formStep: FormStepDirective) {
+    formStep.addValidation('name', (control: AbstractControl): ValidationErrors | null => {
+      const forbidden = control.value === 'forbidden';
+      return forbidden ? {forbiddenName: {value: control.value}} : null;
+    })
+   }
 }
