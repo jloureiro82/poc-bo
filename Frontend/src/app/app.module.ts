@@ -7,11 +7,21 @@ import { SharedModule } from './shared/shared.module';
 import { ExamplesModule } from './examples/examples.module';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreModule } from '@ngrx/store';
-import { HttpClientModule, HttpClientXsrfModule } from '@angular/common/http';
+import { HttpClientXsrfModule } from '@angular/common/http';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { InternationalizationSampleComponent } from './examples/internationalization-sample/internationalization-sample.component';
+
+
+// Factory function required during AOT compilation
+export function httpTranslateLoaderFactory(http: HttpClient) {
+  return new TranslateHttpLoader(http);
+}
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent, InternationalizationSampleComponent
   ],
   imports: [
     BrowserModule,
@@ -22,6 +32,13 @@ import { HttpClientModule, HttpClientXsrfModule } from '@angular/common/http';
     HttpClientXsrfModule.withOptions({
       cookieName: 'My-Xsrf-Cookie',
       headerName: 'My-Xsrf-Header',
+    }),
+    TranslateModule.forRoot({
+      loader: {
+        provide: TranslateLoader,
+        useFactory: httpTranslateLoaderFactory,
+        deps: [HttpClient]
+      }
     }),
     EffectsModule.forRoot([]),
     StoreModule.forRoot({}, {})

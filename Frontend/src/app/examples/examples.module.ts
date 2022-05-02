@@ -12,7 +12,7 @@ import { InternationalizationSampleModule } from './internationalization-sample/
 
 @NgModule({
   declarations: [
-    InternationalizationSampleComponent
+    
   ],
   imports: [
     CommonModule,
