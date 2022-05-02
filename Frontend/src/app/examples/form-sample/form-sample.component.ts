@@ -17,4 +17,8 @@ export class FormSampleComponent {
     this.group.addControl(groupName, group)
     return group
   }
+
+  submit() {
+    return () => console.log(JSON.stringify(this.group.value, null, 2))
+  }
 }

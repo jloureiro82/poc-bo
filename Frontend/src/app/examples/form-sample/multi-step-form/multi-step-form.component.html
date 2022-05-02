@@ -1,11 +1,11 @@
-<div>
+<div class="root">
   <div class="content">
     <ng-template [ngTemplateOutlet]="getStepTemplate()" #render></ng-template>
   </div>
-  <div>
-      <button (click)="backStep()" *ngIf="stepIndex > 0">Back</button>
-      <button (click)="nextStep()" *ngIf="!isLastStep()">Next</button>
-      <button *ngIf="isLastStep()">Submit</button>
+  <div class="btn-holder">
+      <button class="btn-back" (click)="backStep()" *ngIf="stepIndex > 0">Back</button>
+      <button class="btn-next" (click)="nextStep()" *ngIf="!isLastStep()">Next</button>
+      <button class="btn-next" (click)="doSubmit()" *ngIf="isLastStep()">Finish</button>
   </div>
-  <div class="progress"></div>
+  <div class="progression"></div>
 </div>

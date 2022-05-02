@@ -7,7 +7,7 @@ interface Option {
 }
 
 @Component({
-  selector: 'app-form-dropdown',
+  selector: 'mtc-form-dropdown',
   templateUrl: './form-dropdown.component.html',
   styleUrls: ['./form-dropdown.component.css'],
     providers: [
@@ -33,14 +33,11 @@ export class FormDropdownComponent implements AfterContentInit, ControlValueAcce
 
   writeValue(selected: string): void {
     this.selected = this.options.filter(option => option.id === selected).pop() || {id: '', name: this.default}
-    console.log('wv', selected)
   }
   registerOnChange(fn: any): void {
-    console.log('onchange reg', fn)
     this.onChange = fn
   }
   registerOnTouched(fn: any): void {
-    console.log('reg touched')
     this.onTouched = fn
   }
 
@@ -51,7 +48,6 @@ export class FormDropdownComponent implements AfterContentInit, ControlValueAcce
   }
 
   select(id: string) {
-    console.log('id select', id)
     this.onTouched()
     this.dropdown.nativeElement.open = false
     this.writeValue(id)

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 
 @Component({
@@ -9,6 +9,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 export class Step2Component {
 
   @Input('form') form!: FormGroup
+
   genders = [
     {id: 'male', name: 'Male'},
     {id: 'female', name: 'Female'},

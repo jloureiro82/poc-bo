@@ -4,11 +4,14 @@ import { FormLayoutModule } from './form-layout/form-layout.module';
 import { HandlersModule } from './handlers/handlers.module';
 import { MessagesModule } from './messages/messages.module';
 import { CertificateInvoicingModule } from './certificate-invoicing/certificate-invoicing.module';
+import { FormDropdownComponent } from './form-dropdown/form-dropdown.component';
 
 
 
 @NgModule({
-  declarations: [],
+  declarations: [
+    FormDropdownComponent
+  ],
   imports: [
     CommonModule,
     FormLayoutModule,
@@ -17,7 +20,8 @@ import { CertificateInvoicingModule } from './certificate-invoicing/certificate-
     CertificateInvoicingModule
   ],
   exports: [
-    FormLayoutModule
+    FormLayoutModule,
+    FormDropdownComponent
   ]
 })
 export class SharedModule { }
