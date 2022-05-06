@@ -52,3 +52,21 @@ then you can run, for example: `npm run start:fr -- --port=4201` to test the tra
 ## Observations
 about ng generate:
 1. components devem informar `-m` module e `--export` caso precisem ser publicos (em relação ao modulo), services não possuem modulo (tree shaking, só existem se forem referenciados em algum arquivo), modules não possuem `--export` mas precisam fazer bind com outros modulos `-m <parent>` 
+
+powershell helpers to create components, directives and services: 
+```
+function ngcomponent {
+  param ($module, $name)
+  npx ng g component --skip-tests -p mtc -m $module $module/components/$name
+}
+
+function ngdirective {
+  param ($module, $name)
+  npx ng g directive --skip-tests -p mtc -m $module $module/directives/$name
+}
+
+function ngservice {
+  param ($module, $name)
+  npx ng g service --skip-tests $module/services/$name
+}
+```
