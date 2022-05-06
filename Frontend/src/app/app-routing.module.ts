@@ -12,6 +12,7 @@ import { PaymentComponent } from './examples/certificate-invoicing-sample/compon
 import { RepresentativeDataComponent } from './examples/certificate-invoicing-sample/components/representative-data/representative-data.component';
 import { InternationalizationSampleComponent } from './examples/internationalization-sample/internationalization-sample.component';
 import { FormSampleComponent } from './examples/form-sample/form-sample.component';
+import { ParametrizedStepFormComponent } from './examples/parametrized-step-form/parametrized-step-form.component';
 
 export const routes: Routes = [
   { path: 'form-layout-sample', component: FormLayoutSampleComponent },
@@ -21,6 +22,7 @@ export const routes: Routes = [
   { path: 'store-service', component: StoreServiceSampleComponent },
   { path: 'login-sample', component: LoginSampleComponent },
   { path: 'form-sample', component: FormSampleComponent},
+  { path: "param-form", component: ParametrizedStepFormComponent},
   {
     path: "certificate-invoicing-sample",
     component: CertificateInvoicingSampleComponent,

@@ -1,5 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormStepDirective } from '../directives/form-step.directive';
 
 @Component({
   selector: 'app-step2',
@@ -7,9 +7,6 @@ import { FormControl, FormGroup } from '@angular/forms';
   styleUrls: ['./step2.component.css']
 })
 export class Step2Component {
-
-  @Input('form') form!: FormGroup
-
   genders = [
     {id: 'male', name: 'Male'},
     {id: 'female', name: 'Female'},
@@ -21,11 +18,6 @@ export class Step2Component {
     {id: 'france', name: 'France'},
     {id: 'vietnamese', name: 'Vietnamese'},
   ]
-  constructor() { }
 
-  field(name: string) {
-    const field = this.form?.get(name) as FormControl || new FormControl('')
-    this.form?.setControl(name, field)
-    return field
-  }
+  constructor(public formStep: FormStepDirective) { }
 }

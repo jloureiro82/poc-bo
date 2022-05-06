@@ -1,0 +1,14 @@
+<app-managed-form [layout]="formState" #form>
+    <span>teste top header</span>
+    <h2>Page: {{form.pageId()}}</h2>
+    <div [ngSwitch]="form.pageId()">
+        <app-contact-form *ngSwitchCase="'contact'"></app-contact-form>
+        <app-customization-form *ngSwitchCase="'customization'"></app-customization-form>
+        <app-payment-form *ngSwitchCase="'payment'"></app-payment-form>
+    </div>
+    <div>
+        <button prevPage>back</button>
+        <button nextPage>next</button>
+    </div>
+    <span>teste</span>
+</app-managed-form>

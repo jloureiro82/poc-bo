@@ -4,25 +4,25 @@
     </a>
     <div class="form-row form-group">
         <div class="form-holder">
-            <app-form-input name="name" title="First Name" [formControl]="field('name')"></app-form-input>
+            <app-form-input name="name" title="First Name" [formControl]="formStep.field('name')"></app-form-input>
         </div>
         <div class="form-holder">
-            <app-form-input name="surname" title="Last Name" [formControl]="field('surname')"></app-form-input>
+            <app-form-input name="surname" title="Last Name" [formControl]="formStep.field('surname')"></app-form-input>
         </div>
     </div>
     <div class="form-row">
-        <app-form-input name="password" title="Password" type="password" icon="lock-outline" [formControl]="field('password')"></app-form-input>
+        <app-form-input name="password" title="Password" type="password" icon="lock-outline" [formControl]="formStep.field('password')"></app-form-input>
     </div>
     <div class="form-row">
-        <app-form-input name="email" title="Email"  icon="email" [formControl]="field('email')"></app-form-input>
+        <app-form-input name="email" title="Email"  icon="email" [formControl]="formStep.field('email')"></app-form-input>
     </div>
     <div class="form-row">
-        <app-form-input name="Phone" title="Phone" icon="smartphone-android" [formControl]="field('phone')"></app-form-input>
+        <app-form-input name="Phone" title="Phone" icon="smartphone-android" [formControl]="formStep.field('phone')"></app-form-input>
     </div>
     <div class="form-row">
-        <app-form-input name="address" title="Address" icon="map" [formControl]="field('address')"></app-form-input>
+        <app-form-input name="address" title="Address" icon="map" [formControl]="formStep.field('address')"></app-form-input>
     </div>
     <div class="form-row">
-        <app-form-input name="nation" title="Nation" icon="account-box-o" [formControl]="field('nation')"></app-form-input>
+        <app-form-input name="nation" title="Nation" icon="account-box-o" [formControl]="formStep.field('nation')"></app-form-input>
     </div>
 </div>

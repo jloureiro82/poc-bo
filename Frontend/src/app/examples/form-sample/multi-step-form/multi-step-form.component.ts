@@ -1,4 +1,5 @@
-import { AfterContentInit, Component, ContentChildren, Input, QueryList } from '@angular/core';
+import { Component, ContentChildren, EventEmitter, Output, QueryList } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 import { FormStepDirective } from '../directives/form-step.directive';
 
 @Component({
@@ -6,16 +7,16 @@ import { FormStepDirective } from '../directives/form-step.directive';
   templateUrl: './multi-step-form.component.html',
   styleUrls: ['./multi-step-form.component.css']
 })
-export class MultiStepFormComponent implements AfterContentInit {
+export class MultiStepFormComponent {
 
   @ContentChildren(FormStepDirective) steps!: QueryList<FormStepDirective>
-  public stepIndex = 0
-  @Input('submit') submit = () => {}
-  constructor() { }
+  mainForm = new FormGroup({})
+  @Output('submit') submit = new EventEmitter()
 
-  ngAfterContentInit(): void {
-    this.steps.forEach(step => step)
-  }
+  public stepIndex = 0
+  public valid = true
+
+  constructor() { }
 
   getStepTemplate() {
     return this.steps.get(this.stepIndex)?.templateRef || null
@@ -26,7 +27,13 @@ export class MultiStepFormComponent implements AfterContentInit {
   }
 
   nextStep() {
-    this.stepIndex += 1
+    const step = this.steps.get(this.stepIndex)
+    if (step?.isValid()) {
+      this.valid = true
+      this.stepIndex += 1
+    } else {
+      this.valid = false
+    }
   }
 
   backStep() {
@@ -37,7 +44,13 @@ export class MultiStepFormComponent implements AfterContentInit {
     return (this.stepIndex+1) / this.steps.length
   }
 
+  getForm(groupName: string) {
+    const group = this.mainForm.get(groupName) as FormGroup || new FormGroup({})
+    this.mainForm.addControl(groupName, group)
+    return group
+  }
+
   doSubmit() {
-    this.submit()
+    this.submit.emit(this.mainForm.value)
   }
 }

@@ -15,14 +15,11 @@ export class FormLayoutSampleComponent implements OnInit {
     this.value.num = this.value.num + 1
   }
   subVal(event: Event) {
-    console.log(event)
     this.value.num = this.value.num - 1
   }
   txtChange(ev: any) {
-    console.log(ev)
     this.value.text = ev.target.value
   }
-
 
   ngOnInit(): void {
   }
