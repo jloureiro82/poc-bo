@@ -1,6 +1,7 @@
 
 interface Form {
-    name: string
+    name: string,
+    fields: string[]
   }
   
 interface FormLayout {

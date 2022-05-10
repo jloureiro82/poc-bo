@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { ConfigStoreService } from '../services/config-store.service';
-import { map, mergeMap } from 'rxjs'
 import { FormGroup } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-form-manager',
@@ -11,20 +9,19 @@ import { FormGroup } from '@angular/forms';
 })
 export class FormManagerComponent implements OnInit {
 
-  formState!: FormLayout
+  formType!: string
   form = new FormGroup({})
 
-  constructor(private service: ConfigStoreService, private activatedRoute: ActivatedRoute) { }
+  constructor(private activatedRoute: ActivatedRoute) {
+    this.activatedRoute.queryParamMap
+    .subscribe(params => this.formType = params.get('type') || 'default')
+   }
 
-  ngOnInit(): void {
-    this.activatedRoute.queryParamMap.pipe(
-      map(params => params.get('type') || 'default'),
-      mergeMap(type => this.service.getCertForm(type))
-    ).subscribe(cert => {
-      this.formState = cert
-      console.log('resumoo', this)
-    })
+  ngOnInit(): void { }
+  subform(name: string) {
+    const subform = this.form.get(name) as FormGroup || new FormGroup({})
+    this.form.addControl(name, subform)
+    return subform
   }
-
 }
 

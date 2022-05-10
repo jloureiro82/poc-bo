@@ -8,6 +8,9 @@ import { PaymentFormComponent } from './payment-form/payment-form.component';
 import { NextPageDirective } from './directives/next-page.directive';
 import { PrevPageDirective } from './directives/prev-page.directive';
 import { ManagedFormComponent } from './managed-form/managed-form.component';
+import { FormStepDirective } from './directives/form-step.directive';
+import { StepFieldDirective } from './directives/step-field.directive';
+import { ReactiveFormsModule } from '@angular/forms';
 
 
 
@@ -20,10 +23,13 @@ import { ManagedFormComponent } from './managed-form/managed-form.component';
     PaymentFormComponent,
     NextPageDirective,
     PrevPageDirective,
-    ManagedFormComponent
+    ManagedFormComponent,
+    FormStepDirective,
+    StepFieldDirective
   ],
   imports: [
-    CommonModule
+    CommonModule,
+    ReactiveFormsModule
   ],
   exports: [
     ParametrizedStepFormComponent
