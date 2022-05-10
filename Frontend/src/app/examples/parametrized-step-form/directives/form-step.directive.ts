@@ -38,6 +38,10 @@ export class FormStepDirective implements OnInit{
     return this.subform.get(name) as FormControl
   }
 
+  recalculate() {
+    this.subform.updateValueAndValidity()
+  }
+
   private fieldSetup(name: string, validatiors: ValidatorFn[]) {
     let field = this.subform.get(name)
     if (!field) {

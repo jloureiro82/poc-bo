@@ -1,6 +1,6 @@
 <p>contact-form works!</p>
 <div>
-  <input *mtcStepField="'fieldA'" type="text" name="fieldA" placeholder="Optional field A"><br>
+  <input *mtcStepField="'fieldA'" [formControl]="getField('fieldA')" type="text" name="fieldA" placeholder="Optional field A"><br>
   <input *mtcStepField="'fieldB'" [formControl]="getField('fieldB')" type="text" name="fieldB" placeholder="Optional field B"><br>
   <input *mtcStepField="'fieldC'" type="text" name="fieldC" placeholder="Optional field C"><br>
   <div>---------------</div>
@@ -14,6 +14,8 @@
     <button>option C</button>
   </div>
   <div>---------------</div>
-  <button>remoto</button><button>remoto + cartão</button><br>
+  <button (click)="toogleValidation()">remoto</button><button (click)="revalidate()">remoto + cartão</button><br>
   <input type="text" name="onlyCard" placeholder="only if card option enabled">
 </div>
+26/5
+13h20

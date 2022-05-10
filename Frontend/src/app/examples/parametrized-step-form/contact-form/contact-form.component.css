@@ -3,3 +3,6 @@ button {
   margin: 5px;
   background-color: lightblue;
 }
+.ng-invalid {
+  border: 2px solid red;
+}
