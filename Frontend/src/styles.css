@@ -38,10 +38,6 @@ body, html {
   font-family: Montserrat-Bold;
   src: url('./fonts/montserrat/Montserrat-Bold.ttf'); 
 }
-input {
-	outline: none;
-	border: none;
-}
 
 textarea {
   outline: none;
@@ -77,10 +73,4 @@ a {
   text-decoration: none;
   background-color: transparent;
   -webkit-text-decoration-skip: objects;
-}
-
-button {
-  outline: none !important;
-  border: none;
-  background: transparent;
 }
