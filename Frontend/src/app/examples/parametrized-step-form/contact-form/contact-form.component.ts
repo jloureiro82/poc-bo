@@ -1,12 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { FormConfig, FormStepDirective } from '../directives/form-step.directive';
+import { ValidatorFn } from '@angular/forms';
+import { FormStepDirective } from '../directives/form-step.directive';
 
-
-
-const REQUIRED_FIELDS: FormConfig = {
-  reqFieldA: [],
-  reqFieldB: [],
-  reqFieldC: []
+const Validator:ValidatorFn = (control) => {
+  if (control.value === 'invalid') return {invalid: 'value is invalid... literally'}
+  return null
 }
 
 @Component({
@@ -16,36 +14,28 @@ const REQUIRED_FIELDS: FormConfig = {
 })
 export class ContactFormComponent implements OnInit {
 
-  public mustValidate = false
+  public isCardIncluded = false
+
   constructor(private form: FormStepDirective) { }
-  private OPTIONAL_FIELDS: FormConfig = {
-    fieldA: [(control) => {
-      if (!this.mustValidate) return null
-      if (control.value === 'invalid') return {invalid: 'value is invalid... literally'}
-      return null
-    }],
-    fieldB: [],
-    fieldC: []
-  }
-  ngOnInit(): void {
-    this.form.formSetup(REQUIRED_FIELDS, this.OPTIONAL_FIELDS)
-    console.log('oninit', this.form)
-  }
+
+  ngOnInit(): void { }
 
   showField(name: string) {
     const field = this.form.getField(name)
     return !!field
   }
+
   getField(name: string) {
     return this.form.getField(name)
   }
 
   toogleValidation() {
-    this.mustValidate = !this.mustValidate
-    this.getField('fieldA').updateValueAndValidity()
-    console.log('toogle for', this.mustValidate)
-  }
-  revalidate() {
-    this.form.recalculate()
+    const field = this.getField('fieldA')
+    if (field.hasValidator(Validator)) {
+      field.removeValidators(Validator)
+    } else {
+      field.addValidators(Validator)
+    }
+    field.updateValueAndValidity()
   }
 }

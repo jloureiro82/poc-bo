@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-parametrized-step-form',
@@ -7,8 +9,14 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ParametrizedStepFormComponent implements OnInit {
 
-  constructor() { }
+  formType!: string
+  form = new FormGroup({})
 
+  constructor(private activatedRoute: ActivatedRoute) {
+    this.activatedRoute.queryParamMap
+    .subscribe(params => this.formType = params.get('type') || 'default')
+  }
+  
   ngOnInit(): void {
   }
 

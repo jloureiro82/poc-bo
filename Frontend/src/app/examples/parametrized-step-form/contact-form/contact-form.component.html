@@ -8,14 +8,14 @@
   <input *mtcStepField="'reqFieldB'" type="text" name="reqFieldB" placeholder="Required field B"><br>
   <input *mtcStepField="'reqFieldC'" type="text" name="reqFieldC" placeholder="Required field C"><br>
   <div>---------------</div>
-  <div>
-    <button>option A</button>
-    <button>option B</button>
-    <button>option C</button>
+  <div *mtcStepField="'optionField'">
+    <button *mtcFieldOption="'optionA'">option A</button>
+    <button *mtcFieldOption="'optionB'">option B</button>
+    <button *mtcFieldOption="'optionC'">option C</button>
   </div>
   <div>---------------</div>
-  <button (click)="toogleValidation()">remoto</button><button (click)="revalidate()">remoto + cartão</button><br>
-  <input type="text" name="onlyCard" placeholder="only if card option enabled">
+  <button (click)="toogleValidation()">TEST BUTTON</button>
+  <div>---------------</div>
+  <button (click)="isCardIncluded=false">remoto</button> - <button (click)="isCardIncluded=true">remoto + cartão</button><br>
+  <input *ngIf="isCardIncluded" [formControl]="getField('cardField')" type="text" name="onlyCard" placeholder="only if card option enabled">
 </div>
-26/5
-13h20

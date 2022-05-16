@@ -22,11 +22,7 @@ export class PaymentFormComponent implements OnInit {
 
   constructor(private form: FormStepDirective) { }
 
-  ngOnInit(): void {
-    console.log('testeteste')
-    this.form.formSetup(REQUIRED_FIELDS, OPTIONAL_FIELDS)
-    console.log('oninit', this.form)
-  }
+  ngOnInit(): void { }
 
   showField(name: string) {
     const field = this.form.getField(name)

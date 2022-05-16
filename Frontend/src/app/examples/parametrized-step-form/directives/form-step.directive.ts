@@ -1,6 +1,7 @@
 import { Directive, Input, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn } from '@angular/forms';
 import { ManagedFormComponent } from '../managed-form/managed-form.component';
+import { StepConfig } from '../types';
 
 export interface FormConfig {
   [key: string]: ValidatorFn[]
@@ -9,45 +10,29 @@ export interface FormConfig {
 @Directive({
   selector: '[formStep]'
 })
-export class FormStepDirective implements OnInit{
+export class FormStepDirective implements OnInit {
 
   @Input('formStep') stepName!: string
 
-  private config!: Form
+  private config!: StepConfig
   private subform!: FormGroup
 
   constructor(private managedForm: ManagedFormComponent) { }
 
   ngOnInit(): void {
-    this.config = this.managedForm.getConfig(this.stepName)
-    this.subform = this.managedForm.subForm(this.config.name)
-  }
-
-  formSetup(requiredFields: FormConfig, optionalFields: FormConfig) {
-    Object.entries(requiredFields).forEach(([key, validators]) => {
-      this.fieldSetup(key, validators)
-    })
-    Object.entries(optionalFields).forEach(([key, validators]) => {
-      if (this.config.fields.includes(key)) {
-        this.fieldSetup(key, validators)
-      }
-    })
+    this.config = this.managedForm.formSetup.getConfig(this.stepName)
+    this.subform = this.managedForm.formSetup.subform(this.stepName)
   }
 
   getField(name: string) {
     return this.subform.get(name) as FormControl
   }
 
-  recalculate() {
-    this.subform.updateValueAndValidity()
+  hasField(name: string) {
+    return !!this.config.fields[name]
   }
 
-  private fieldSetup(name: string, validatiors: ValidatorFn[]) {
-    let field = this.subform.get(name)
-    if (!field) {
-      field = new FormControl('')
-    }
-    field.addValidators(validatiors)
-    this.subform.addControl(name, field)
+  getFieldConfig(name: string) {
+    return this.config.fields[name]
   }
 }

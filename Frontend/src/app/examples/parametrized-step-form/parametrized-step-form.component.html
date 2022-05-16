@@ -1,3 +1,20 @@
-<app-form-manager>
-    
-</app-form-manager>
+<managed-form [type]="formType" #form>
+  <span>teste top header</span>
+  <h2>Layout: {{form.layoutName()}}</h2>
+  <h3>Page: {{form.pageId()}}</h3>
+  <div [ngSwitch]="form.pageId()">
+    <app-contact-form *ngSwitchCase="'contact'" [formStep]="'contact'">
+    </app-contact-form>
+    <app-customization-form *ngSwitchCase="'customization'" [formStep]="'customization'">
+    </app-customization-form>
+    <app-payment-form *ngSwitchCase="'payment'" [formStep]="'payment'">
+    </app-payment-form>
+    <div *ngSwitchDefault>
+      invalid form selected, set the query parameter "type" to see a form step
+    </div>
+  </div>
+  <div>
+    <button prevPage>back</button>
+    <button nextPage>next</button>
+  </div>
+</managed-form>
