@@ -16,6 +16,6 @@
   <div>---------------</div>
   <button (click)="toogleValidation()">TEST BUTTON</button>
   <div>---------------</div>
-  <button (click)="isCardIncluded=false">remoto</button> - <button (click)="isCardIncluded=true">remoto + cartão</button><br>
-  <input *ngIf="isCardIncluded" [formControl]="getField('cardField')" type="text" name="onlyCard" placeholder="only if card option enabled">
+  <button (click)="toogleIncludeCard(false)">remoto</button> - <button (click)="toogleIncludeCard(true)">remoto + cartão</button><br>
+  <input [formControl]="getField('cardField')" type="text" name="onlyCard" placeholder="only if card option enabled">
 </div>

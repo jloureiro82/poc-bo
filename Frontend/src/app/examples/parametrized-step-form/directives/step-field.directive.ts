@@ -9,6 +9,7 @@ export class StepFieldDirective implements OnInit {
 
   @Input('mtcStepField') name!: string
   public fieldConfig!: FieldConfig
+  
   constructor(
     private form: FormStepDirective, 
     private viewContainer: ViewContainerRef,

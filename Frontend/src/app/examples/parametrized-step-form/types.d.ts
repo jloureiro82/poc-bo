@@ -11,6 +11,7 @@ interface CertConfig {
 }
 
 interface FieldConfig {
+    default?: any
     validations: ValidatorFn[],
     options?: string[]
 }

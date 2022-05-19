@@ -1,4 +1,4 @@
-<managed-form [type]="formType" #form>
+<managed-form #form>
   <span>teste top header</span>
   <h2>Layout: {{form.layoutName()}}</h2>
   <h3>Page: {{form.pageId()}}</h3>
@@ -16,5 +16,6 @@
   <div>
     <button prevPage>back</button>
     <button nextPage>next</button>
+    <button>submit</button>
   </div>
 </managed-form>

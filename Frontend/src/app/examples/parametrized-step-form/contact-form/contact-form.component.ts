@@ -29,6 +29,19 @@ export class ContactFormComponent implements OnInit {
     return this.form.getField(name)
   }
 
+  toogleIncludeCard(flag: boolean) {
+    this.isCardIncluded = flag
+    this.getField('cardIncluded').setValue(flag)
+    const field = this.getField('cardField')
+    const fieldConfig = this.form.getFieldConfig('cardField')
+    if (flag) {
+      field.addValidators(fieldConfig.validations)
+    } else {
+      field.removeValidators(fieldConfig.validations)
+    }
+    field.updateValueAndValidity()
+  }
+
   toogleValidation() {
     const field = this.getField('fieldA')
     if (field.hasValidator(Validator)) {

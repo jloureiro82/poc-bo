@@ -1,6 +1,6 @@
-import { Directive, HostBinding, HostListener, TemplateRef, ViewContainerRef, ViewRef } from '@angular/core';
+import { Directive, HostBinding, HostListener } from '@angular/core';
 import { ManagedFormComponent } from '../managed-form/managed-form.component';
-import { FormNavigation } from '../services/config-store.service';
+import { FormNavigation } from '../model/form-navigation';
 
 
 @Directive({
@@ -9,8 +9,8 @@ import { FormNavigation } from '../services/config-store.service';
 export class NextPageDirective {
   
   @HostBinding('hidden') hidden = true
-  constructor(
-    private form: ManagedFormComponent) {
+
+  constructor(private form: ManagedFormComponent) {
       form.onChange((f:FormNavigation) => {
         this.hidden = !f.next()
       })
@@ -18,8 +18,6 @@ export class NextPageDirective {
 
   @HostListener('click')
   onClick() {
-    const nav = this.form.formSetup.navigation
-    console.log('value on next', this.form.formSetup.form.value)
-    nav.gotoStep(nav.next())
+    this.form.nextStep()
   }
 }
