@@ -1,0 +1,52 @@
+{
+    "steps":[{
+        "step1": {
+            "controls": [{
+              "name": "certificateType",
+              "label": "Forma de certificação",
+              "value": "smartcardRemote",
+              "type": "radio",
+              "options": [{
+                  "key": "remote",
+                  "value": "REMOTO"
+                },
+                {
+                  "key": "usbRemote",
+                  "value": "USB + REMOTO"
+                },
+                {
+                  "key": "smartcardRemote",
+                  "value": "SMARTCARD + REMOTO"
+                }
+              ],
+              "validators": {
+                "required": true,
+                "minLength": 10
+              }
+            }]
+          },
+          "step2": {
+            "controls": [{
+              "name": "firstName",
+              "label": "First name:",
+              "value": "Joaquim",
+              "type": "text",
+              "validators": {
+                "required": true,
+                "minLength": 10
+              }
+            },
+            {
+                "name": "lastName",
+                "label": "Last name:",
+                "value": "",
+                "type": "text",
+                "validators": {
+                  "required": true,
+                  "minLength": 15
+                }
+              }
+            ]
+          }
+    }]
+}
