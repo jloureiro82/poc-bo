@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: scribe-service
+  ai:
+    # openai (padrão) ou ollama — ver README "Como testar sem OpenAI"
+    model:
+      chat: ${SPRING_AI_MODEL_CHAT:ollama}
+    openai:
+      api-key: ${SPRING_AI_OPENAI_API_KEY:changeme}
+      chat:
+        options:
+          model: gpt-4o
+    ollama:
+      base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://localhost:11434}
+      chat:
+        options:
+          model: ${SPRING_AI_OLLAMA_MODEL:llama3.2}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, info
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
