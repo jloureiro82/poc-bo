@@ -57,7 +57,7 @@ the other two folders).
 
 ### CI
 
-Each component has its own Jenkins pipeline in `<component>/ci/Jenkinsfile`: tests (apps only), Sonar, image build
+Each component has its own Jenkins pipeline in `<component>/ci/Jenkinsfile`: tests (apps only), image build
 and push, and the DEV deploy on `develop`. Set each one up as its own pipeline job (plain or multibranch) on this repository, with that
 file as the Script Path. Each image has its own version: `version` in the app's `package.json`, or
 `configurator-portal/VERSION`.

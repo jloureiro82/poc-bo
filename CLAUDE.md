@@ -61,10 +61,9 @@ docker compose down
 
 Each component has its own pipeline, set up in Jenkins as its own pipeline job (plain or multibranch) on this repository with Script Path
 `<component>/ci/Jenkinsfile`. It runs from the workspace root and works on the folder named by `component`, which is
-also the image name and the Sonar project key prefix (`<component>-<branch>`).
+also the image name.
 
-Stages: version (`-snapshot` on `develop`), unit tests in `node:24-alpine` (apps only; the portal has no code), Sonar
-(`sonarsource/sonar-scanner-cli` on the component folder, settings in `<component>/sonar-project.properties`),
+Stages: version (`-snapshot` on `develop`), unit tests in `node:24-alpine` (apps only; the portal has no code),
 `docker build` of the folder, push to `${dockerRegistry}/${dockerRepo}/${project}/<component>:<version>`, and on
 `develop` the DEV deploy job (skipped while `deployDevJob` is empty).
 
@@ -73,15 +72,16 @@ Stages: version (`-snapshot` on `develop`), unit tests in `node:24-alpine` (apps
 
 - The agent is expected to have only Docker. Every tool runs in a container started with
   `--user $(id -u):$(id -g)`, so `deleteDir()` can remove what it leaves behind.
-- Sonar's URL and token come from `withSonarQubeEnv(installationName: 'SonarQube', credentialsId: 'SonarQubeToken')`,
-  as in the other components' pipelines on this Jenkins. Never write tokens into a Jenkinsfile.
 - The agents cannot reach Docker Hub. Every image comes through the mirror `dockerMirror` (`nexus:8440`): the tool
   images by name (`nexus:8440/node:24-alpine`), and the Dockerfiles' bases through the `BASE_REGISTRY` build arg,
   which is empty (Docker Hub) for local builds. A new `FROM` must use `${BASE_REGISTRY}` too.
-- Sonar is reached directly at `sonarUrl` (`http://ci.dev.multicert.com/sonar/`, plain http, as in the team's other
-  pipelines) from a scanner container on the agent's network (`--network host`); `withSonarQubeEnv` gives only the
-  token. Seen on 2026-10-16: on worker02 a container's own network times out (http and https) and the host network
-  passes (https); on worker01 the host network with https times out.
+- **Sonar is off for now** (removed 2026-10-16): worker01 cannot reach it. `ci.dev.multicert.com` resolves to two
+  addresses; only the one worker02 resolves on its own (likely an `/etc/hosts` entry) answers, and the corporate DNS
+  answer (worker01, and containers on both agents) times out. Fix that on the agents or in DNS, then restore the
+  `Sonar` stage from git history (commit `3dede62`) and drop its temporary DNS check. What made it work on worker02:
+  `withSonarQubeEnv(installationName: 'SonarQube', credentialsId: 'SonarQubeToken')` for the token (never write one
+  into a Jenkinsfile), `--network host`, `SONAR_USER_HOME=/tmp/.sonar`, and the work dir in the workspace. Each
+  component keeps its `sonar-project.properties` for then. Keep IP addresses out of the Jenkinsfiles.
 - Proxy settings reach the image builds as `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` build args, which npm reads. The
   Dockerfiles need no proxy-specific code.
 - To release a component, bump its own version: `version` in the app's `package.json` (and the two matching fields at
