@@ -23,7 +23,7 @@ pipeline {
         // the branch treated as develop: its images get "-snapshot" and it deploys DEV
         devBranch = "poc-wfmanager"
         // Jenkins job that deploys DEV; leave empty to skip the deploy stage
-        deployDevJob = "poc-wfmanager"
+        deployDevJob = "Configurator Deploy DEV"
         //-----------------------------------------
         // the folder this pipeline builds; also the image name
         component = "workflow-manager-ui"
