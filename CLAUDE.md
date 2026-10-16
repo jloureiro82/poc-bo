@@ -63,9 +63,9 @@ Each component has its own pipeline, set up in Jenkins as its own pipeline job (
 `<component>/ci/Jenkinsfile`. It runs from the workspace root and works on the folder named by `component`, which is
 also the image name.
 
-Stages: version (`-snapshot` on `develop`), unit tests in `node:24-alpine` (apps only; the portal has no code),
+Stages: version (`-snapshot` on `devBranch`, for now `poc-wfmanager`), unit tests in `node:24-alpine` (apps only; the portal has no code),
 `docker build` of the folder, push to `${dockerRegistry}/${dockerRepo}/${project}/<component>:<version>`, and on
-`develop` the DEV deploy job (skipped while `deployDevJob` is empty).
+`devBranch` the DEV deploy job (skipped while `deployDevJob` is empty).
 
 - The two app pipelines differ only in `component` and comments. When you change one, change the other too. Make the
   same change in the portal's pipeline when it touches a stage the portal also has.

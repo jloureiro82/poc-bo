@@ -58,7 +58,7 @@ the other two folders).
 ### CI
 
 Each component has its own Jenkins pipeline in `<component>/ci/Jenkinsfile`: tests (apps only), image build
-and push, and the DEV deploy on `develop`. Set each one up as its own pipeline job (plain or multibranch) on this repository, with that
+and push, and the DEV deploy on the branch set as `devBranch` (for now `poc-wfmanager`). Set each one up as its own pipeline job (plain or multibranch) on this repository, with that
 file as the Script Path. `deploy/ci/Jenkinsfile` deploys to DEV (see `deploy/`). Each image has its own version: `version` in the app's `package.json`, or
 `configurator-portal/VERSION`.
 

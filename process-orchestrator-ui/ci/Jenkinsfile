@@ -1,7 +1,7 @@
 // Tests and publishes the process-orchestrator-ui image. Sonar is off for now: see the CI notes in CLAUDE.md.
 // Jenkins job: pipeline (or multibranch pipeline) on this repository, Script Path "process-orchestrator-ui/ci/Jenkinsfile".
 // Image name: ${dockerRegistry}/${dockerRepo}/${project}/${component}:<version>
-// The version comes from ${component}/package.json ("-snapshot" is added on develop).
+// The version comes from ${component}/package.json ("-snapshot" is added on devBranch).
 // A copy of workflow-manager-ui/ci/Jenkinsfile: keep them in step.
 pipeline {
 
@@ -20,6 +20,8 @@ pipeline {
         httpsProxy = "http://proxy.multicert.dev:8080"
         noProxy = "localhost,multicert.inet,multicert.dev,forge.multicert.inet,ssl_ev_oa2,*.multicert.dev,*.pipelines.multicert.dev,*.dev.multicert.com"
         httpProxy = "http://proxy.multicert.dev:8080"
+        // the branch treated as develop: its images get "-snapshot" and it deploys DEV
+        devBranch = "poc-wfmanager"
         // Jenkins job that deploys DEV; leave empty to skip the deploy stage
         deployDevJob = ""
         //-----------------------------------------
@@ -43,7 +45,7 @@ pipeline {
               // BRANCH_NAME is set only in multibranch jobs; a plain pipeline job has GIT_BRANCH ("origin/develop")
               env.branch = env.BRANCH_NAME ?: (env.GIT_BRANCH ?: "unknown").replaceFirst("^origin/", "")
 
-              if (env.branch == "develop") {
+              if (env.branch == env.devBranch) {
                   env.version = env.version + "-snapshot"
               }
 
@@ -90,7 +92,7 @@ pipeline {
       stage('Deploy DEV') {
         when {
           allOf {
-            expression { env.branch == "develop" }
+            expression { env.branch == env.devBranch }
             expression { env.deployDevJob?.trim() }
           }
         }
