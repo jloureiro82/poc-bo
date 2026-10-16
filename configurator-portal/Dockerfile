@@ -1,6 +1,8 @@
 # The configurator portal: one address for the micro frontends (workflow-manager-ui, process-orchestrator-ui).
 # It holds no app code: each app is its own image, built and deployed on its own.
-FROM nginx:1.29-alpine
+# Registry the base image is pulled from, with its trailing "/" (empty: Docker Hub). CI passes its mirror.
+ARG BASE_REGISTRY=
+FROM ${BASE_REGISTRY}nginx:1.29-alpine
 # Set at deploy time:
 #   PORTAL_WM_UI_URL  where the workflow-manager-ui container listens, e.g. http://workflow-manager-ui
 #   PORTAL_PO_UI_URL  where the process-orchestrator-ui container listens, e.g. http://process-orchestrator-ui

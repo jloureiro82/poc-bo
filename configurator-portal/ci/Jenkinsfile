@@ -16,6 +16,8 @@ pipeline {
         sonarProjectNameSuffix = "branch"
         dockerRegistry = "nexus:8443"
         dockerRepo = "multicert"
+        // Docker Hub mirror (the agents cannot reach Docker Hub): the tool images and the Dockerfiles' base images
+        dockerMirror = "nexus:8440"
         httpsProxy = "http://proxy.multicert.dev:8080"
         noProxy = "localhost,multicert.inet,multicert.dev,forge.multicert.inet,ssl_ev_oa2,*.multicert.dev,*.pipelines.multicert.dev,*.dev.multicert.com"
         httpProxy = "http://proxy.multicert.dev:8080"
@@ -65,7 +67,7 @@ pipeline {
           sh """SONAR_TOKEN="\$SONAR_AUTH_TOKEN" docker run --rm --user \$(id -u):\$(id -g) \
              -e SONAR_HOST_URL -e SONAR_TOKEN \
              -e SONAR_SCANNER_OPTS='-Dhttp.proxyHost=proxy.multicert.dev -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.multicert.dev -Dhttps.proxyPort=8080 -Dhttp.nonProxyHosts=localhost|*.multicert.dev|*.dev.multicert.com|*.multicert.inet' \
-             -v "\$PWD/${component}":/usr/src sonarsource/sonar-scanner-cli \
+             -v "\$PWD/${component}":/usr/src ${dockerMirror}/sonarsource/sonar-scanner-cli \
              -Dsonar.projectKey='${env.sonarProjectKey}' \
              -Dsonar.projectName='${env.sonarProjectName}' \
              -Dsonar.projectVersion='${env.versionSonar}' \
@@ -77,7 +79,8 @@ pipeline {
       stage('Build Docker') {
         steps {
           sh "echo version: ${version}"
-          sh "docker build --build-arg HTTP_PROXY='${httpProxy}' \
+          sh "docker build --build-arg BASE_REGISTRY='${dockerMirror}/' \
+             --build-arg HTTP_PROXY='${httpProxy}' \
              --build-arg HTTPS_PROXY='${httpsProxy}' \
              --build-arg NO_PROXY='${noProxy}' \
              ${component} -t ${image}"

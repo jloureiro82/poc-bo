@@ -1,5 +1,7 @@
+# Registry the base images are pulled from, with its trailing "/" (empty: Docker Hub). CI passes its mirror.
+ARG BASE_REGISTRY=
 # --- build: production bundle (never contains a dev token) ---
-FROM node:24-alpine AS build
+FROM ${BASE_REGISTRY}node:24-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts --no-audit --no-fund
@@ -7,7 +9,7 @@ COPY . .
 RUN npx ng build --configuration production
 
 # --- runtime: nginx serves the app and proxies /api and /management to workflow-manager ---
-FROM nginx:1.29-alpine
+FROM ${BASE_REGISTRY}nginx:1.29-alpine
 # Set at deploy time (the container stops with a message if one is wrong or a required one is missing):
 #   WM_BACKEND_URL  required: base URL of the service, with its context path, e.g. http://workflow-manager:8081/workflowmanager
 #   WM_TOKEN        required: JWT that nginx sends as `Authorization: Bearer ...`; it never reaches the browser
