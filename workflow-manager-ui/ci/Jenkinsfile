@@ -23,7 +23,7 @@ pipeline {
         // the branch treated as develop: its images get "-snapshot" and it deploys DEV
         devBranch = "poc-wfmanager"
         // Jenkins job that deploys DEV; leave empty to skip the deploy stage
-        deployDevJob = ""
+        deployDevJob = "poc-wfmanager"
         //-----------------------------------------
         // the folder this pipeline builds; also the image name
         component = "workflow-manager-ui"
@@ -32,6 +32,12 @@ pipeline {
     options {
         buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '3', numToKeepStr: '5'))
         disableConcurrentBuilds()
+    }
+
+    // every 2 minutes Jenkins asks git for new commits, and builds only when there are some
+    // (Jenkins registers the trigger on the job's first run of this file)
+    triggers {
+        pollSCM('H/2 * * * *')
     }
 
     stages {
