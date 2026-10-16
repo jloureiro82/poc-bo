@@ -13,7 +13,7 @@ pipeline {
     environment {
         CONTAINER_NAME_PREFIX = "configurators"
         HOST_CONFIGURATORS = "onboarding02.multicert.dev"
-        HOST_CONFIGURATORS_SSH_KEY = "ci_onboarding021"
+        HOST_CONFIGURATORS_SSH_KEY = "ci_onboarding02"
     }
     //-----------------------------------------
 
