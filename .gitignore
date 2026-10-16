@@ -1,5 +1,7 @@
 # deploy-time secrets (the services' JWTs)
 .env
+# ...but deploy/.env is the committed list of versions and ports, with no secrets
+!deploy/.env
 
 # dev-only JWTs used by `npm start` (each app also ignores its own)
 **/src/environments/environment.development.ts

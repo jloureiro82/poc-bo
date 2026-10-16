@@ -84,6 +84,13 @@ Stages: version (`-snapshot` on `develop`), unit tests in `node:24-alpine` (apps
   component keeps its `sonar-project.properties` for then. Keep IP addresses out of the Jenkinsfiles.
 - Proxy settings reach the image builds as `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` build args, which npm reads. The
   Dockerfiles need no proxy-specific code.
+- `deploy/` runs the pushed images (it builds nothing). `deploy/.env` holds versions, ports and logging; each
+  container's settings are in `deploy/env/<name>.env`. **For now, by the user's choice, the apps' tokens (`WM_TOKEN`,
+  `PO_TOKEN`) are committed in `deploy/env/<app>.env`**: an exception to the rules below, meant to move to Jenkins
+  credentials. Never print them. After a release, set the new version in `deploy/.env`.
+- `deploy/ci/Jenkinsfile` deploys it to DEV over SSH (`docker-compose -H ssh://ci@<host>`, as the team's components
+  deploy does), for `REQUESTED_ACTION` = `all` or a component name. Every deploy recreates the portal, since it looks
+  up the apps only when it starts. The build pipelines call it once their `deployDevJob` names this job.
 - To release a component, bump its own version: `version` in the app's `package.json` (and the two matching fields at
   the top of `package-lock.json`), or `configurator-portal/VERSION`.
 

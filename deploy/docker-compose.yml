@@ -1,0 +1,60 @@
+# Deploys the configurator portal and its two micro frontends from the images the pipelines push.
+# Nothing is built here. Versions, ports and logging are in .env next to this file; each container's own settings are
+# in env/<name>.env, the apps' tokens included.
+#   docker compose -p configurators up -d --wait        (from this folder; ci/Jenkinsfile deploys it the same way)
+
+services:
+  configurator-portal:
+    image: ${DOCKER_REGISTRY}/configurator-portal:${CONFIGURATOR_PORTAL_VERSION}
+    env_file:
+      - env/configurator-portal.env
+    ports:
+      - "${CONFIGURATOR_PORTAL_PORT}:80"
+    # the portal resolves the apps' names when it starts, so it starts after them
+    depends_on:
+      workflow-manager-ui:
+        condition: service_healthy
+      process-orchestrator-ui:
+        condition: service_healthy
+    logging:
+      driver: syslog
+      options:
+        syslog-address: ${RSYSLOG_ADDRESS}
+        syslog-format: ${RSYSLOG_FORMAT}
+        syslog-facility: ${RSYSLOG_FACILITY}
+        tag: ${CONFIGURATOR_PORTAL_RSYSLOG_TAG}
+    restart: unless-stopped
+
+  workflow-manager-ui:
+    image: ${DOCKER_REGISTRY}/workflow-manager-ui:${WORKFLOW_MANAGER_UI_VERSION}
+    env_file:
+      - env/workflow-manager-ui.env
+    ports:
+      - "${WORKFLOW_MANAGER_UI_PORT}:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    logging:
+      driver: syslog
+      options:
+        syslog-address: ${RSYSLOG_ADDRESS}
+        syslog-format: ${RSYSLOG_FORMAT}
+        syslog-facility: ${RSYSLOG_FACILITY}
+        tag: ${WORKFLOW_MANAGER_UI_RSYSLOG_TAG}
+    restart: unless-stopped
+
+  process-orchestrator-ui:
+    image: ${DOCKER_REGISTRY}/process-orchestrator-ui:${PROCESS_ORCHESTRATOR_UI_VERSION}
+    env_file:
+      - env/process-orchestrator-ui.env
+    ports:
+      - "${PROCESS_ORCHESTRATOR_UI_PORT}:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    logging:
+      driver: syslog
+      options:
+        syslog-address: ${RSYSLOG_ADDRESS}
+        syslog-format: ${RSYSLOG_FORMAT}
+        syslog-facility: ${RSYSLOG_FACILITY}
+        tag: ${PROCESS_ORCHESTRATOR_UI_RSYSLOG_TAG}
+    restart: unless-stopped

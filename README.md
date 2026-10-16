@@ -59,7 +59,7 @@ the other two folders).
 
 Each component has its own Jenkins pipeline in `<component>/ci/Jenkinsfile`: tests (apps only), image build
 and push, and the DEV deploy on `develop`. Set each one up as its own pipeline job (plain or multibranch) on this repository, with that
-file as the Script Path. Each image has its own version: `version` in the app's `package.json`, or
+file as the Script Path. `deploy/ci/Jenkinsfile` deploys to DEV (see `deploy/`). Each image has its own version: `version` in the app's `package.json`, or
 `configurator-portal/VERSION`.
 
 ### Security
@@ -112,5 +112,6 @@ as the app's README describes.
 | File | What it is |
 |---|---|
 | `docker-compose.yml` | The portal and both apps, built from their folders |
+| `deploy/` | Deployment from the pushed images: `docker-compose.yml`, `.env` (versions, ports, logging), and `env/<name>.env` per container (for now including the apps' tokens) |
 | `.env.example` | The deploy-time settings; copy to `.env` (git-ignored) |
 | `.gitattributes` | Keeps LF line endings on files used inside the containers |

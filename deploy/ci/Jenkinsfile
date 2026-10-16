@@ -1,0 +1,156 @@
+// Deploys the configurator portal and its micro frontends to DEV with deploy/docker-compose.yml, over SSH.
+// Jenkins job: pipeline on this repository, Script Path "deploy/ci/Jenkinsfile". The build pipelines
+// (<component>/ci/Jenkinsfile) call it with REQUESTED_ACTION = their component once their deployDevJob names it.
+// Versions and ports come from deploy/.env; each container's settings, the apps' tokens included, from deploy/env/.
+pipeline {
+    agent {
+            label 'master'
+        }
+
+
+    // CHANGE VARIABLE TO YOUR PROJECT NAME AND ENVIRONMENT
+    //-----------------------------------------
+    environment {
+        CONTAINER_NAME_PREFIX = "configurators"
+        HOST_CONFIGURATORS = "lxmtccomponentsd01.multicert.dev"
+        HOST_CONFIGURATORS_SSH_KEY = "ci_lxmtccomponentsd01"
+    }
+    //-----------------------------------------
+
+    options {
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        choice(
+            choices: ['all', 'configurator-portal', 'workflow-manager-ui', 'process-orchestrator-ui'],
+            description: 'What to deploy. Deploying an app also recreates the portal, which looks up the apps only when it starts.',
+            name: 'REQUESTED_ACTION')
+    }
+
+    stages {
+
+        stage ('Init') {
+            steps {
+                setup("${HOST_CONFIGURATORS_SSH_KEY}", "${HOST_CONFIGURATORS}")
+            }
+        }
+
+        stage ('Stop Container(s)') {
+            steps {
+                script {
+                    if (params.REQUESTED_ACTION == 'all' || params.REQUESTED_ACTION == 'workflow-manager-ui') {
+                        stopContainer("${HOST_CONFIGURATORS_SSH_KEY}", "workflow-manager-ui", "${HOST_CONFIGURATORS}")
+                    }
+                    if (params.REQUESTED_ACTION == 'all' || params.REQUESTED_ACTION == 'process-orchestrator-ui') {
+                        stopContainer("${HOST_CONFIGURATORS_SSH_KEY}", "process-orchestrator-ui", "${HOST_CONFIGURATORS}")
+                    }
+                    // the portal is recreated on every deploy (see REQUESTED_ACTION)
+                    stopContainer("${HOST_CONFIGURATORS_SSH_KEY}", "configurator-portal", "${HOST_CONFIGURATORS}")
+                }
+
+                // Clear dangling images only: the host is shared with other components
+                clearOldImages("${HOST_CONFIGURATORS_SSH_KEY}", "${HOST_CONFIGURATORS}")
+            }
+        }
+
+        stage ('Pull new images') {
+            steps {
+                script {
+                    if (params.REQUESTED_ACTION == 'all' || params.REQUESTED_ACTION == 'workflow-manager-ui') {
+                        pullNewImages("${HOST_CONFIGURATORS_SSH_KEY}", "workflow-manager-ui", "${HOST_CONFIGURATORS}")
+                    }
+                    if (params.REQUESTED_ACTION == 'all' || params.REQUESTED_ACTION == 'process-orchestrator-ui') {
+                        pullNewImages("${HOST_CONFIGURATORS_SSH_KEY}", "process-orchestrator-ui", "${HOST_CONFIGURATORS}")
+                    }
+                    if (params.REQUESTED_ACTION == 'all' || params.REQUESTED_ACTION == 'configurator-portal') {
+                        pullNewImages("${HOST_CONFIGURATORS_SSH_KEY}", "configurator-portal", "${HOST_CONFIGURATORS}")
+                    }
+                }
+            }
+        }
+
+        stage ('Deploy WorkflowManagerUi') {
+            when {
+                expression { params.REQUESTED_ACTION == 'workflow-manager-ui' || params.REQUESTED_ACTION == 'all'}
+            }
+            steps {
+                startContainer("${HOST_CONFIGURATORS_SSH_KEY}", "workflow-manager-ui", "${HOST_CONFIGURATORS}")
+            }
+        }
+
+        stage ('Deploy ProcessOrchestratorUi') {
+            when {
+                expression { params.REQUESTED_ACTION == 'process-orchestrator-ui' || params.REQUESTED_ACTION == 'all'}
+            }
+            steps {
+                startContainer("${HOST_CONFIGURATORS_SSH_KEY}", "process-orchestrator-ui", "${HOST_CONFIGURATORS}")
+            }
+        }
+
+        // Always: the portal starts after the apps (it waits for them to be healthy) and looks them up again
+        stage ('Deploy ConfiguratorPortal') {
+            steps {
+                startContainer("${HOST_CONFIGURATORS_SSH_KEY}", "configurator-portal", "${HOST_CONFIGURATORS}")
+            }
+        }
+
+        stage ('Status Container(s)') {
+            steps {
+                statusContainer("${HOST_CONFIGURATORS_SSH_KEY}", "${HOST_CONFIGURATORS}")
+            }
+        }
+    }
+
+    post {
+        success {
+            sh 'echo Finalizado Deploy em DEV Configurators'
+        }
+
+        failure {
+            sh 'echo Falhou Deploy em DEV Configurators'
+        }
+
+        cleanup {
+            deleteDir()
+        }
+    }
+}
+
+def setup(String hostSSHKey, String hostname) {
+    sshagent([hostSSHKey]) {
+        sh "ls -laF"
+        sh "ssh -o StrictHostKeyChecking=no ci@" + hostname + " docker image ls"
+        sh "docker -H ssh://ci@" + hostname + " ps"
+    }
+}
+
+def stopContainer(String hostSSHKey, String serviceName, String hostname) {
+    sshagent([hostSSHKey]) {
+        sh "cd deploy && COMPOSE_PARAMIKO_SSH=1 docker-compose -H ssh://ci@" + hostname + " -p ${CONTAINER_NAME_PREFIX} -f docker-compose.yml rm -s -f " + serviceName
+    }
+}
+
+def startContainer(String hostSSHKey, String serviceName, String hostname) {
+    sshagent([hostSSHKey]) {
+        sh "cd deploy && COMPOSE_PARAMIKO_SSH=1 docker-compose -H ssh://ci@" + hostname + " -p ${CONTAINER_NAME_PREFIX} -f docker-compose.yml up -d " + serviceName
+    }
+}
+
+def statusContainer(String hostSSHKey, String hostname) {
+    sshagent([hostSSHKey]) {
+        sh "docker -H ssh://ci@" + hostname + " ps -a --filter label=com.docker.compose.project=${CONTAINER_NAME_PREFIX}"
+    }
+}
+
+def pullNewImages(String hostSSHKey, String serviceName, String hostname) {
+    sshagent([hostSSHKey]) {
+        sh "cd deploy && COMPOSE_PARAMIKO_SSH=1 docker-compose -H ssh://ci@" + hostname + " -p ${CONTAINER_NAME_PREFIX} -f docker-compose.yml pull " + serviceName
+    }
+}
+
+def clearOldImages(String hostSSHKey, String hostname) {
+    sshagent([hostSSHKey]) {
+        sh "docker -H ssh://ci@" + hostname + " image prune -f"
+    }
+}
