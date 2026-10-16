@@ -13,6 +13,8 @@ pipeline {
         // CHANGE VARIABLES TO YOUR PROJECT
         //-----------------------------------------
         project = "components"
+        // plain HTTP, as in the other pipelines: the agents cannot all reach the https URL of the "SonarQube" installation
+        sonarUrl = "http://ci.dev.multicert.com/sonar/"
         sonarProjectNameSuffix = "branch"
         dockerRegistry = "nexus:8443"
         dockerRepo = "multicert"
@@ -75,13 +77,13 @@ pipeline {
       // "SonarQubeToken" credential (as in the other components' pipelines) give the URL and the token.
       // As the agent's user the scanner cannot write its cache in the image, so SONAR_USER_HOME is in /tmp;
       // its work dir is in the workspace, where the Sonar plugin reads report-task.txt.
-      // The Sonar server (ci.dev.multicert.com) is reached directly, on the agent's network: from a container's
-      // own network it times out, and so does going through proxy.multicert.inet (tried on worker02).
+      // The Sonar server is reached directly at sonarUrl (plain http); the installation's https URL is not
+      // reachable from every agent.
       stage('Sonar') {
         steps {
           withSonarQubeEnv(installationName: 'SonarQube', credentialsId: 'SonarQubeToken') {
-          sh """SONAR_TOKEN="\$SONAR_AUTH_TOKEN" docker run --rm --network host --user \$(id -u):\$(id -g) \
-             -e SONAR_HOST_URL -e SONAR_TOKEN -e SONAR_USER_HOME=/tmp/.sonar \
+          sh """SONAR_TOKEN="\$SONAR_AUTH_TOKEN" docker run --rm --user \$(id -u):\$(id -g) \
+             -e SONAR_HOST_URL='${sonarUrl}' -e SONAR_TOKEN -e SONAR_USER_HOME=/tmp/.sonar \
              -e SONAR_SCANNER_OPTS='-Dhttp.proxyHost=proxy.multicert.dev -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.multicert.dev -Dhttps.proxyPort=8080 -Dhttp.nonProxyHosts=localhost|*.multicert.dev|*.dev.multicert.com|*.multicert.inet' \
              -v "\$PWD/${component}":/usr/src ${dockerMirror}/sonarsource/sonar-scanner-cli \
              -Dsonar.projectKey='${env.sonarProjectKey}' \

@@ -78,9 +78,9 @@ Stages: version (`-snapshot` on `develop`), unit tests in `node:24-alpine` (apps
 - The agents cannot reach Docker Hub. Every image comes through the mirror `dockerMirror` (`nexus:8440`): the tool
   images by name (`nexus:8440/node:24-alpine`), and the Dockerfiles' bases through the `BASE_REGISTRY` build arg,
   which is empty (Docker Hub) for local builds. A new `FROM` must use `${BASE_REGISTRY}` too.
-- Sonar (`ci.dev.multicert.com`) is reached directly, from a scanner container on the agent's network
-  (`--network host`). Tried on 2026-10-16: this passes on worker02 and times out on worker01 (left to infra); a
-  container's own network and the proxy `proxy.multicert.inet` both time out on worker02.
+- Sonar is reached directly at `sonarUrl` (`http://ci.dev.multicert.com/sonar/`, plain http, as in the team's other
+  pipelines). The "SonarQube" installation's `https://` URL times out from the agents' containers (2026-10-16), so it
+  is not used; `withSonarQubeEnv` still gives the token.
 - Proxy settings reach the image builds as `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` build args, which npm reads. The
   Dockerfiles need no proxy-specific code.
 - To release a component, bump its own version: `version` in the app's `package.json` (and the two matching fields at
