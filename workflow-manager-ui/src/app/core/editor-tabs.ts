@@ -7,6 +7,8 @@ import { sameValue } from './diff';
 export interface EditorTab<T = unknown> {
   id: string;
   body: T;
+  /** The document as it was opened or last published: the tab shows it is edited while `body` differs from it. */
+  base: T;
 }
 
 export interface TabsState<T = unknown> {
@@ -20,7 +22,18 @@ export function newTabId(now = new Date()): string {
 }
 
 export function singleTab<T>(body: T, id = newTabId()): TabsState<T> {
-  return { tabs: [{ id, body }], active: id };
+  return { tabs: [{ id, body, base: body }], active: id };
+}
+
+/** Whether a tab holds changes since it was opened or last published. */
+export function isEdited<T>(tab: EditorTab<T>): boolean {
+  return tab.body !== tab.base && !sameValue(tab.body, tab.base);
+}
+
+/** After publishing the shown tab: its document is the new base, so it no longer shows as edited. */
+export function markPublished<T>(state: TabsState<T>): TabsState<T> {
+  const current = activeTab(state);
+  return { ...state, tabs: state.tabs.map(t => (t.id === current.id ? { ...t, base: t.body } : t)) };
 }
 
 export function activeTab<T>(state: TabsState<T>): EditorTab<T> {
@@ -40,7 +53,7 @@ export function openTab<T>(state: TabsState<T>, body: T, options: { reuse?: bool
   }
   const id = options.id ?? newTabId();
   const at = state.tabs.findIndex(t => t.id === state.active) + 1;
-  const tabs = [...state.tabs.slice(0, at), { id, body }, ...state.tabs.slice(at)];
+  const tabs = [...state.tabs.slice(0, at), { id, body, base: body }, ...state.tabs.slice(at)];
   return { tabs, active: id };
 }
 
@@ -75,7 +88,10 @@ export function updateActive<T>(state: TabsState<T>, body: T): TabsState<T> {
   return { ...state, tabs: state.tabs.map(t => (t.id === current.id ? { ...t, body } : t)) };
 }
 
-/** Accepts a stored state only when it is well formed: at least one tab, unique ids, an active id among them. */
+/**
+ * Accepts a stored state only when it is well formed: at least one tab, unique ids, an active id among them. A tab
+ * stored without a base (saved before tabs had one) takes its document as the base.
+ */
 export function validTabs<T>(value: unknown): TabsState<T> | null {
   if (!value || typeof value !== 'object') {
     return null;
@@ -90,5 +106,6 @@ export function validTabs<T>(value: unknown): TabsState<T> | null {
     return null;
   }
   const first = (tabs[0] as EditorTab).id;
-  return { tabs: tabs as EditorTab<T>[], active: typeof active === 'string' && ids.has(active) ? active : first };
+  const withBase = (tabs as EditorTab<T>[]).map(t => (t.base && typeof t.base === 'object' ? t : { ...t, base: t.body }));
+  return { tabs: withBase, active: typeof active === 'string' && ids.has(active) ? active : first };
 }

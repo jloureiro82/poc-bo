@@ -35,11 +35,22 @@ Nothing reaches the service until you publish.
 
 ### Tabs
 
-Each open workflow has a tab above the toolbar, so you can work on several at once. Click a tab to switch to it.
-Each tab keeps its own undo history and selection. **+** opens a new workflow. **✕** (or a middle click) closes a
-tab without asking: it goes to **Closed tabs** in the toolbar, which reopens it (the newest 20 are kept). Closing
-the last tab leaves a new one. New, Sample, Import, and opening a stored version or a run's definition each open in a
-new tab; if that exact document is already open, its tab is shown instead.
+Each open workflow has a tab on the left of the toolbar, so you can work on several at once. Click a tab to switch to it.
+A mark before a tab's name shows its state: **✖** when the document has validation errors, a **dot** when it has
+changes since it was opened or last published. Each tab keeps its own undo history and selection. **+** opens a new
+tab: a blank workflow, the sample, or an imported `.json` file. **✕** (or a middle click) closes a tab without asking:
+it goes to **Closed tabs** in the toolbar, which reopens it (the newest 20 are kept). Closing the last tab leaves a new
+one. Importing a file, and opening a stored version or a run's definition, also open a new tab; if that exact document
+is already open, its tab is shown instead.
+
+With a tab focused (Tab moves to the shown one), **←** / **→** and **Home** / **End** move between tabs, **Enter**
+opens the focused tab and **Delete** closes it.
+
+| **+** (tab bar) | What it opens, in a new tab |
+|---|---|
+| **Blank workflow** | A one-task workflow. |
+| **Sample workflow** | A sample that uses a decision, notifications and an HTTP call. |
+| **Import…** | A JSON file: a bare definition, a full create request, or a stored version from the service. |
 
 Your tabs are kept in the browser, so a reload reopens them. They are kept per browser: two browser windows on the
 same editor overwrite each other's tabs, so edit in one window.
@@ -48,10 +59,7 @@ same editor overwrite each other's tabs, so edit in one window.
 
 | Button | What it does |
 |---|---|
-| **New** | Opens a one-task workflow in a new tab. |
-| **Sample** | Opens a sample that uses a decision, notifications and an HTTP call, in a new tab. |
 | **Closed tabs** | Lists the tabs you closed; click one to reopen it, ✕ to forget it. |
-| **Import** | Opens a JSON file in a new tab: a bare definition, a full create request, or a stored version from the service. |
 | **Export** | Saves the definition as `<name>.json`. |
 | **Copy JSON** | Copies the definition to the clipboard. |
 | **Publish** | Creates a new version in the service. Disabled while any error remains. |

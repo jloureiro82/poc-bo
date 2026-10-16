@@ -13,7 +13,7 @@ import {
   takeQueuedOpen,
   unwrapImported,
 } from '../../core/drafts';
-import { TabsState, activeTab, closeTab, openTab, selectTab, updateActive } from '../../core/editor-tabs';
+import { TabsState, activeTab, closeTab, isEdited, markPublished, openTab, selectTab, updateActive } from '../../core/editor-tabs';
 import { History } from '../../core/history';
 import { Severity, fieldSeverity, severityByNode } from '../../core/issues';
 import { JsonPath, getAt, isObject, pathToString, setAt } from '../../core/json-path';
@@ -32,7 +32,7 @@ import { newOrchestrator, sampleOrchestrator } from '../../core/samples';
 import { WorkflowCatalogService } from '../../core/workflow-catalog.service';
 import { exportDiagram } from '../../shared/diagram-export';
 import { download } from '../../shared/download';
-import { EditorTabs, TabLabel } from '../../shared/editor-tabs';
+import { AddOption, EditorTabs, TabLabel } from '../../shared/editor-tabs';
 import { IssuesPanel } from '../../shared/issues-panel';
 import { KeyActivate } from '../../shared/key-activate';
 import { JsonDocument } from '../../shared/json-document';
@@ -62,6 +62,13 @@ interface NodeRow {
 
 /** Documents not worth keeping in the closed-tabs list: the starters, untouched. */
 const PRISTINE = [newOrchestrator(), sampleOrchestrator()];
+
+/** The tab bar's "+" menu. */
+const ADD_OPTIONS: AddOption[] = [
+  { id: 'blank', label: 'Blank configuration', hint: 'One step with one activity, to start from' },
+  { id: 'sample', label: 'Sample configuration', hint: 'Manual and automatic steps, a cancellation workflow' },
+  { id: 'import', label: 'Import…', hint: 'A .json file: a definition or a full create request' },
+];
 
 @Component({
   selector: 'app-orchestrator-editor',
@@ -97,9 +104,19 @@ export class OrchestratorEditor {
    * into its tab. Each tab has its own undo history and selection, kept here by tab id (not stored).
    */
   protected readonly tabs = signal<TabsState<OrchestratorConfig>>(loadTabs('orchestrator', sampleOrchestrator));
+  /** Each tab's title and state. The shown tab's errors come from `issues`; the others are validated here. */
   protected readonly tabLabels = computed<TabLabel[]>(() =>
-    this.tabs().tabs.map(t => ({ id: t.id, title: (t.id === this.tabs().active ? this.config() : t.body).label || '(no label)' })),
+    this.tabs().tabs.map(t => {
+      const shown = t.id === this.tabs().active;
+      const body = shown ? this.config() : t.body;
+      const errors = shown
+        ? this.errorCount() > 0
+        : validateOrchestrator(body, { workflows: this.catalog.catalog() }).some(i => i.severity === 'error');
+      return { id: t.id, title: body.label || '(no label)', errors, edited: isEdited({ ...t, body }) };
+    }),
   );
+  protected readonly addOptions = ADD_OPTIONS;
+  private readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
   private readonly histories = new Map<string, History<OrchestratorConfig>>();
   private readonly selections = new Map<string, string>();
 
@@ -199,6 +216,15 @@ export class OrchestratorEditor {
 
   protected reset(kind: 'blank' | 'sample'): void {
     this.openDocument(kind === 'blank' ? newOrchestrator() : sampleOrchestrator(), kind === 'blank' ? 'New configuration' : 'Sample configuration');
+  }
+
+  /** An entry of the tab bar's "+" menu. */
+  protected onAdd(id: string): void {
+    if (id === 'import') {
+      this.importInput()?.nativeElement.click();
+    } else {
+      this.reset(id === 'sample' ? 'sample' : 'blank');
+    }
   }
 
   /**
@@ -508,6 +534,7 @@ export class OrchestratorEditor {
   protected onPublished(saved: AnyEnvelope): void {
     const stored = toStored('orchestrator', saved);
     this.publishing.set(false);
+    this.tabs.update(markPublished);
     this.flash(`Published ${stored.name} version ${stored.details.version}`);
   }
 

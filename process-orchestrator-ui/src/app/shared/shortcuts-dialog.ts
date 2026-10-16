@@ -37,6 +37,15 @@ export const WORKFLOW_SHORTCUTS: ShortcutGroup[] = [
     ],
   },
   {
+    group: 'In the tab bar (with a tab focused)',
+    items: [
+      { keys: ['←'], does: 'Focus the previous tab (→: the next one)' },
+      { keys: ['Home'], does: 'Focus the first tab (End: the last one)' },
+      { keys: ['Enter'], does: 'Open the focused tab' },
+      { keys: ['Delete'], does: 'Close the focused tab (it goes to Closed tabs)' },
+    ],
+  },
+  {
     group: 'Other',
     items: [
       { keys: ['/'], does: 'Find a task' },
@@ -65,6 +74,15 @@ export const ORCHESTRATOR_SHORTCUTS: ShortcutGroup[] = [
       { keys: ['Alt', '↓'], does: 'Move it down in its list' },
       { keys: ['Delete'], does: 'Delete it (its successors then follow its predecessors)' },
       { keys: ['Esc'], does: 'Select the orchestrator' },
+    ],
+  },
+  {
+    group: 'In the tab bar (with a tab focused)',
+    items: [
+      { keys: ['←'], does: 'Focus the previous tab (→: the next one)' },
+      { keys: ['Home'], does: 'Focus the first tab (End: the last one)' },
+      { keys: ['Enter'], does: 'Open the focused tab' },
+      { keys: ['Delete'], does: 'Close the focused tab (it goes to Closed tabs)' },
     ],
   },
   {

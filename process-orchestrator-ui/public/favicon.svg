@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="300 300 650 650">
+  <title>Configurators</title>
+  <!-- Multicert colours: navy #1C1D29, cyan #0A9AC7. The navy turns light on dark browser chrome. -->
+  <style>
+    .navy { fill: #1c1d29; }
+    .line { stroke: #1c1d29; }
+    .cyan { fill: #0a9ac7; }
+    @media (prefers-color-scheme: dark) {
+      .navy { fill: #e8eaf0; }
+      .line { stroke: #e8eaf0; }
+    }
+  </style>
+  <path class="line" d="M500 619H600L755 464M600 619L755 774" fill="none" stroke-width="40" stroke-linecap="round" stroke-linejoin="round" />
+  <rect class="navy" x="322" y="523" width="198" height="198" rx="44" />
+  <rect class="cyan" x="756" y="376" width="170" height="171" rx="36" />
+  <rect class="cyan" x="756" y="700" width="170" height="172" rx="36" />
+</svg>

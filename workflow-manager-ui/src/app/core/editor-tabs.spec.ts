@@ -1,4 +1,4 @@
-import { activeTab, closeTab, openTab, selectTab, singleTab, updateActive, validTabs } from './editor-tabs';
+import { activeTab, closeTab, isEdited, markPublished, openTab, selectTab, singleTab, updateActive, validTabs } from './editor-tabs';
 
 const doc = (name: string) => ({ name, tasks: [] as unknown[] });
 
@@ -51,6 +51,23 @@ describe('editor tabs', () => {
     const s = singleTab(doc('a'), 'a');
     expect(selectTab(s, 'nope')).toBe(s);
     expect(closeTab(s, 'nope', () => doc('new'))).toBe(s);
+  });
+
+  it('shows a tab as edited once its document differs from the one it opened with, until it is published', () => {
+    const opened = openTab(singleTab(doc('a'), 'a'), doc('b'), { id: 'b' });
+    expect(opened.tabs.map(isEdited)).toEqual([false, false]);
+    const edited = updateActive(opened, doc('b2'));
+    expect(edited.tabs.map(isEdited)).toEqual([false, true]);
+    expect(updateActive(edited, doc('b')).tabs.map(isEdited)).toEqual([false, false]);
+    const published = markPublished(edited);
+    expect(published.tabs.map(isEdited)).toEqual([false, false]);
+    expect(activeTab(published).base).toEqual(doc('b2'));
+  });
+
+  it('gives tabs stored without a base their document as the base', () => {
+    const stored = validTabs<{ name: string }>({ tabs: [{ id: 'a', body: doc('a') }], active: 'a' })!;
+    expect(stored.tabs[0].base).toEqual(doc('a'));
+    expect(isEdited(stored.tabs[0])).toBe(false);
   });
 
   it('accepts only well-formed stored tabs', () => {

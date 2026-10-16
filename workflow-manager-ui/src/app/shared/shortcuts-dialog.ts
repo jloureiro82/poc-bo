@@ -32,6 +32,15 @@ export const EDITOR_SHORTCUTS: { group: string; items: Shortcut[] }[] = [
     ],
   },
   {
+    group: 'In the tab bar (with a tab focused)',
+    items: [
+      { keys: ['←'], does: 'Focus the previous tab (→: the next one)' },
+      { keys: ['Home'], does: 'Focus the first tab (End: the last one)' },
+      { keys: ['Enter'], does: 'Open the focused tab' },
+      { keys: ['Delete'], does: 'Close the focused tab (it goes to Closed tabs)' },
+    ],
+  },
+  {
     group: 'Other',
     items: [
       { keys: ['/'], does: 'Find a task' },

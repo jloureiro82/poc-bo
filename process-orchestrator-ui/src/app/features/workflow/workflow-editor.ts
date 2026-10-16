@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { AnyEnvelope, toStored } from '../../core/config-api.service';
 import { MAX_SAVED_DRAFTS, SavedDraft, forgetDraft, keepDraft, listSavedDrafts, loadTabs, saveTabs, takeQueuedOpen, unwrapImported } from '../../core/drafts';
-import { TabsState, activeTab, closeTab, openTab, selectTab, updateActive } from '../../core/editor-tabs';
+import { TabsState, activeTab, closeTab, isEdited, markPublished, openTab, selectTab, updateActive } from '../../core/editor-tabs';
 import { sameValue } from '../../core/diff';
 import { History } from '../../core/history';
 import { labelsIn, parseTasks, prepareForPaste } from '../../core/task-clipboard';
@@ -17,7 +17,7 @@ import { findTaskPath, moveTask as moveTaskTo } from '../../core/task-moves';
 import { caseKeyText, childTaskLists, validateWorkflow } from '../../core/workflow-validator';
 import { AutoGrow } from '../../shared/auto-grow';
 import { DiagramViewport } from '../../shared/diagram-viewport';
-import { EditorTabs, TabLabel } from '../../shared/editor-tabs';
+import { AddOption, EditorTabs, TabLabel } from '../../shared/editor-tabs';
 import { ResizeHandle } from '../../shared/resize-handle';
 import { IssuesPanel } from '../../shared/issues-panel';
 import { KeyActivate } from '../../shared/key-activate';
@@ -47,6 +47,13 @@ interface OutlineRow {
 
 /** Documents not worth keeping in the closed-tabs list: the starters, untouched. */
 const PRISTINE = [newWorkflow(), sampleWorkflow()];
+
+/** The tab bar's "+" menu. */
+const ADD_OPTIONS: AddOption[] = [
+  { id: 'blank', label: 'Blank workflow', hint: 'One task to start from' },
+  { id: 'sample', label: 'Sample workflow', hint: 'A decision, notifications and checks' },
+  { id: 'import', label: 'Import…', hint: 'A .json file: a definition or a full create request' },
+];
 
 @Component({
   selector: 'app-workflow-editor',
@@ -88,9 +95,19 @@ export class WorkflowEditor {
    * into its tab. Each tab has its own undo history and selection, kept here by tab id (not stored).
    */
   protected readonly tabs = signal<TabsState<WorkflowDefinition>>(loadTabs('workflow', sampleWorkflow));
+  /** Each tab's title and state. The shown tab's errors come from `issues`; the others are validated here. */
   protected readonly tabLabels = computed<TabLabel[]>(() =>
-    this.tabs().tabs.map(t => ({ id: t.id, title: (t.id === this.tabs().active ? this.config() : t.body).label || '(no label)' })),
+    this.tabs().tabs.map(t => {
+      const shown = t.id === this.tabs().active;
+      const body = shown ? this.config() : t.body;
+      const errors = shown
+        ? this.errorCount() > 0
+        : validateWorkflow(body, { workflows: this.catalog.catalog() }).some(i => i.severity === 'error');
+      return { id: t.id, title: body.label || '(no label)', errors, edited: isEdited({ ...t, body }) };
+    }),
   );
+  protected readonly addOptions = ADD_OPTIONS;
+  private readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
   private readonly histories = new Map<string, History<WorkflowDefinition>>();
   private readonly selections = new Map<string, string>();
 
@@ -209,6 +226,15 @@ export class WorkflowEditor {
 
   protected reset(kind: 'blank' | 'sample'): void {
     this.openDocument(kind === 'blank' ? newWorkflow() : sampleWorkflow(), kind === 'blank' ? 'New workflow' : 'Sample workflow');
+  }
+
+  /** An entry of the tab bar's "+" menu. */
+  protected onAdd(id: string): void {
+    if (id === 'import') {
+      this.importInput()?.nativeElement.click();
+    } else {
+      this.reset(id === 'sample' ? 'sample' : 'blank');
+    }
   }
 
   /**
@@ -605,6 +631,7 @@ export class WorkflowEditor {
   protected onPublished(saved: AnyEnvelope): void {
     const stored = toStored('workflow', saved);
     this.publishing.set(false);
+    this.tabs.update(markPublished);
     this.flash(`Published ${stored.name} version ${stored.details.version}`);
     void this.catalog.refresh();
   }

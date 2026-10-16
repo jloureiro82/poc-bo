@@ -7,7 +7,7 @@ import { SettingsService } from './core/settings.service';
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
   template: `
     <nav class="topnav">
-      <a class="brand" routerLink="/workflow" title="Workflow editor"><span class="brand-mark" aria-hidden="true"></span>Workflow Configurator</a>
+      <a class="brand" routerLink="/workflow" title="Workflow editor"><img class="brand-mark" src="favicon.svg" alt="" width="20" height="20" />Workflow Configurator</a>
       <a routerLink="/workflow" routerLinkActive="active">Workflow</a>
       <a routerLink="/library" routerLinkActive="active">Stored workflows</a>
       <a routerLink="/executions" routerLinkActive="active">Executions</a>

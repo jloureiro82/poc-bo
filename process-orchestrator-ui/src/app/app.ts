@@ -11,7 +11,7 @@ import { SettingsService } from './core/settings.service';
     <!-- the overview page brings its own floating nav -->
     @if (!onOverview()) {
     <nav class="topnav">
-      <a class="brand" routerLink="/overview" title="Overview"><span class="brand-mark" aria-hidden="true"></span>Flow Configurator</a>
+      <a class="brand" routerLink="/overview" title="Overview"><img class="brand-mark" src="favicon.svg" alt="" width="20" height="20" />Flow Configurator</a>
       <a routerLink="/orchestrator" routerLinkActive="active">Orchestrators</a>
       <a routerLink="/workflow" routerLinkActive="active">Workflows</a>
       <a routerLink="/library" routerLinkActive="active">Stored configurations</a>

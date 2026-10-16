@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <title>Configurators</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <style>
     :root {
       color-scheme: light dark;
@@ -50,10 +52,8 @@
     main { max-width: 860px; margin: 0 auto; padding: 72px 16px 48px; }
     h1 { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-size: 26px; letter-spacing: -0.02em; }
     .lead { margin: 0 0 32px; color: var(--muted); }
-    .mark { position: relative; width: 22px; height: 22px; flex-shrink: 0; }
-    .mark::before, .mark::after { content: ''; position: absolute; width: 11px; height: 11px; border-radius: 3px; }
-    .mark::before { left: 0; top: 0; background: var(--accent); }
-    .mark::after { right: 0; bottom: 0; background: var(--auto); }
+    /* the product mark (favicon.svg, Multicert colours); it turns its navy light in dark mode by itself */
+    .mark { width: 30px; height: 30px; flex-shrink: 0; }
     .apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }
     .app {
       display: flex;
@@ -84,7 +84,7 @@
 </head>
 <body>
   <main>
-    <h1><span class="mark" aria-hidden="true"></span>Configurators</h1>
+    <h1><img class="mark" src="favicon.svg" alt="" width="30" height="30">Configurators</h1>
     <p class="lead">Design, validate, publish and monitor the configurations of the platform's services.</p>
     <ul class="apps">
       <li>

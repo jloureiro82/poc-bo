@@ -424,29 +424,11 @@ details summary {
   margin-right: 20px;
   color: var(--text);
 }
-/* two linked nodes: the product in one glyph */
+/* the product mark (public/favicon.svg, Multicert colours); it turns its navy light in dark mode by itself */
 .brand-mark {
-  position: relative;
-  width: 18px;
-  height: 18px;
-}
-.brand-mark::before,
-.brand-mark::after {
-  content: '';
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  border-radius: 2.5px;
-}
-.brand-mark::before {
-  left: 0;
-  top: 0;
-  background: var(--accent);
-}
-.brand-mark::after {
-  right: 0;
-  bottom: 0;
-  background: var(--auto);
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
 }
 .topnav a {
   position: relative;
@@ -2260,15 +2242,27 @@ button.draft-open {
   margin: 0;
 }
 
-/* editor tabs: one per open document, above the toolbar; scrolls sideways when there are many */
+/* editor tabs: one per open document, in the toolbar's row (they take the room the actions leave, and scroll
+   sideways when there are many); the toolbar's h1 is kept for screen readers only */
+app-editor-tabs {
+  flex: 1 1 0;
+  min-width: 140px;
+}
 .editor-tabs {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 4px;
-  margin: 0 7px;
-  padding: 6px 4px 0;
+}
+/* the tabs scroll; the "+" after them does not */
+.editor-tab-list {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   overflow-x: auto;
   scrollbar-width: thin;
+  padding: 2px 0;
 }
 .editor-tab {
   flex: 0 0 auto;
@@ -2294,10 +2288,61 @@ button.editor-tab-open {
   padding: 5px 4px 5px 12px;
   font-size: 12.5px;
   font-weight: 550;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.editor-tab-title {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  display: block;
+}
+/* tab state: ✖ = validation errors (the Validation panel's error mark), dot = edited since it was opened or published.
+   Different shapes, so the two never depend on telling red from blue. */
+.tab-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.tab-dot.error {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  color: var(--error);
+  font-size: 10px;
+  line-height: 1;
+}
+.tab-dot.edited {
+  background: var(--accent);
+}
+/* the "+" menu: fixed like the closed-tabs menu, with one entry per way to open a document */
+.tab-add-menu {
+  position: fixed;
+  z-index: var(--z-menu);
+  width: min(300px, calc(100vw - 16px));
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  animation: fade-in 0.14s var(--ease);
+}
+button.menu-item {
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  border-color: transparent;
+  background: transparent;
+  white-space: normal;
+  text-align: left;
+  padding: 6px 8px;
+}
+button.menu-item:hover,
+button.menu-item:focus-visible {
+  background: var(--surface-2);
 }
 button.editor-tab-close,
 button.editor-tab-add {
@@ -2307,6 +2352,13 @@ button.editor-tab-add {
   padding: 4px 8px;
   font-size: 11px;
   line-height: 1;
+}
+/* at least 24 × 24 to hit (WCAG 2.5.8), without making the tab look bigger */
+button.editor-tab-close {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 6px;
+  justify-content: center;
 }
 button.editor-tab-close:hover {
   color: var(--text);

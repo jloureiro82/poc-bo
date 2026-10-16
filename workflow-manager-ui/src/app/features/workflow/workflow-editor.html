@@ -1,19 +1,18 @@
 <div class="editor">
-  <app-editor-tabs [tabs]="tabLabels()" [active]="tabs().active" (select)="selectTab($event)" (close)="closeTab($event)" (add)="reset('blank')" />
+  <input #importInput type="file" accept=".json,application/json" hidden (change)="importFile($event)" />
   <header class="toolbar">
-    <h1>Workflow <span class="muted">{{ config().name || '(no name)' }}</span></h1>
+    <h1 class="visually-hidden">Workflow</h1>
+    <app-editor-tabs [tabs]="tabLabels()" [active]="tabs().active" [addOptions]="addOptions"
+                     (select)="selectTab($event)" (close)="closeTab($event)" (add)="onAdd($event)" />
     <div class="toolbar-actions">
       <span class="button-group" role="group" aria-label="History">
         <button class="ghost icon-text" (click)="undo()" [disabled]="!canUndo()" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
         <button class="ghost icon-text" (click)="redo()" [disabled]="!canRedo()" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
       </span>
-      <button class="ghost" (click)="reset('blank')">New</button>
-      <button class="ghost" (click)="reset('sample')">Sample</button>
       <button class="ghost drafts-toggle" (click)="toggleDrafts($event)" [attr.aria-expanded]="!!draftsMenu()" aria-haspopup="menu"
               title="Tabs you closed; reopen one here">
         Closed tabs{{ savedDrafts().length ? ' (' + savedDrafts().length + ')' : '' }} ▾
       </button>
-      <label class="button ghost">Import<input type="file" accept=".json,application/json" hidden (change)="importFile($event)" /></label>
       <button class="ghost" (click)="exportFile()">Export</button>
       <button class="ghost" (click)="copyJson()">Copy JSON</button>
       <button class="ghost icon-text" (click)="showShortcuts.set(true)" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</button>

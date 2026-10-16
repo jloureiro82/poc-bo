@@ -17,7 +17,7 @@ import { ShowcasePage } from './showcase-page';
     <!-- Floating island nav -------------------------------------------------------------------------------------->
     <nav class="sc-nav" aria-label="Overview">
       <a class="sc-brand" routerLink="/overview" (click)="scrollTo('top')">
-        <span class="brand-mark" aria-hidden="true"></span>Flow Configurator
+        <img class="brand-mark" src="favicon.svg" alt="" width="20" height="20" />Flow Configurator
       </a>
       <div class="sc-nav-links">
         @for (s of sections; track s.id) {

@@ -61,7 +61,9 @@ core/                                     framework-free logic (plus a few root 
 
 shared/                     reusable UI
   diagram-viewport.ts       scroll + zoom (CSS zoom) + pan + Fit
-  editor-tabs.ts            the tab bar above an editor (select, close, middle-click close, +)
+  editor-tabs.ts            the tab bar, in the editor's toolbar row: ✖ (errors) or a dot (edited since opened
+                            or published, `isEdited()` against the tab's `base`) per tab, close, the "+" menu,
+                            and the ARIA tabs keyboard (only the shown tab is a tab stop; its keys stop there)
   issues-panel.ts           validation list
   json-field.ts             JSON value editor (object fields)
   json-document.ts          whole-document JSON tab
