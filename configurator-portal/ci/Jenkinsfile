@@ -63,15 +63,14 @@ pipeline {
       // "SonarQubeToken" credential (as in the other components' pipelines) give the URL and the token.
       // As the agent's user the scanner cannot write its cache in the image, so SONAR_USER_HOME is in /tmp;
       // its work dir is in the workspace, where the Sonar plugin reads report-task.txt.
-      // Not every agent reaches the Sonar server (ci.dev.multicert.com) directly, and a container's own network
-      // reaches it from none. So the scanner uses the agent's network and the proxy of the Maven builds'
-      // settings (proxy.multicert.inet), and the Sonar host is not in its nonProxyHosts.
+      // The Sonar server (ci.dev.multicert.com) is reached directly, on the agent's network: from a container's
+      // own network it times out, and so does going through proxy.multicert.inet (tried on worker02).
       stage('Sonar') {
         steps {
           withSonarQubeEnv(installationName: 'SonarQube', credentialsId: 'SonarQubeToken') {
           sh """SONAR_TOKEN="\$SONAR_AUTH_TOKEN" docker run --rm --network host --user \$(id -u):\$(id -g) \
              -e SONAR_HOST_URL -e SONAR_TOKEN -e SONAR_USER_HOME=/tmp/.sonar \
-             -e SONAR_SCANNER_OPTS='-Dhttp.proxyHost=proxy.multicert.inet -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.multicert.inet -Dhttps.proxyPort=8080 -Dhttp.nonProxyHosts=localhost|*.multicert.dev|*.multicert.inet' \
+             -e SONAR_SCANNER_OPTS='-Dhttp.proxyHost=proxy.multicert.dev -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.multicert.dev -Dhttps.proxyPort=8080 -Dhttp.nonProxyHosts=localhost|*.multicert.dev|*.dev.multicert.com|*.multicert.inet' \
              -v "\$PWD/${component}":/usr/src ${dockerMirror}/sonarsource/sonar-scanner-cli \
              -Dsonar.projectKey='${env.sonarProjectKey}' \
              -Dsonar.projectName='${env.sonarProjectName}' \
