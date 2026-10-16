@@ -61,17 +61,19 @@ pipeline {
 
       // Settings in ${component}/sonar-project.properties. The Jenkins "SonarQube" installation and the
       // "SonarQubeToken" credential (as in the other components' pipelines) give the URL and the token.
+      // As the agent's user the scanner cannot write its cache in the image, so SONAR_USER_HOME is in /tmp;
+      // its work dir is in the workspace, where the Sonar plugin reads report-task.txt.
       stage('Sonar') {
         steps {
           withSonarQubeEnv(installationName: 'SonarQube', credentialsId: 'SonarQubeToken') {
           sh """SONAR_TOKEN="\$SONAR_AUTH_TOKEN" docker run --rm --user \$(id -u):\$(id -g) \
-             -e SONAR_HOST_URL -e SONAR_TOKEN \
+             -e SONAR_HOST_URL -e SONAR_TOKEN -e SONAR_USER_HOME=/tmp/.sonar \
              -e SONAR_SCANNER_OPTS='-Dhttp.proxyHost=proxy.multicert.dev -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.multicert.dev -Dhttps.proxyPort=8080 -Dhttp.nonProxyHosts=localhost|*.multicert.dev|*.dev.multicert.com|*.multicert.inet' \
              -v "\$PWD/${component}":/usr/src ${dockerMirror}/sonarsource/sonar-scanner-cli \
              -Dsonar.projectKey='${env.sonarProjectKey}' \
              -Dsonar.projectName='${env.sonarProjectName}' \
              -Dsonar.projectVersion='${env.versionSonar}' \
-             -Dsonar.working.directory=/tmp/.scannerwork"""
+             -Dsonar.working.directory=/usr/src/.scannerwork"""
           }
         }
       }
