@@ -73,7 +73,8 @@ Stages: version (`-snapshot` on `develop`), unit tests in `node:24-alpine` (apps
 
 - The agent is expected to have only Docker. Every tool runs in a container started with
   `--user $(id -u):$(id -g)`, so `deleteDir()` can remove what it leaves behind.
-- The Sonar token comes from the Jenkins credential `sonar-token`. Never write tokens into the Jenkinsfile.
+- Sonar's URL and token come from `withSonarQubeEnv(installationName: 'SonarQube', credentialsId: 'SonarQubeToken')`,
+  as in the other components' pipelines on this Jenkins. Never write tokens into a Jenkinsfile.
 - Proxy settings reach the image builds as `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` build args, which npm reads. The
   Dockerfiles need no proxy-specific code.
 - To release a component, bump its own version: `version` in the app's `package.json` (and the two matching fields at

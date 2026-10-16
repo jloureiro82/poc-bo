@@ -13,7 +13,6 @@ pipeline {
         // CHANGE VARIABLES TO YOUR PROJECT
         //-----------------------------------------
         project = "components"
-        sonarUrl = "http://ci.dev.multicert.com/sonar/"
         sonarProjectNameSuffix = "branch"
         dockerRegistry = "nexus:8443"
         dockerRepo = "multicert"
@@ -23,8 +22,6 @@ pipeline {
         // Jenkins job that deploys DEV; leave empty to skip the deploy stage
         deployDevJob = ""
         //-----------------------------------------
-        // Jenkins "Secret text" credential holding the Sonar token
-        SONAR_TOKEN = credentials('sonar-token')
         // the folder this pipeline builds; also the image name and the Sonar project prefix
         component = "process-orchestrator-ui"
     }
@@ -70,17 +67,20 @@ pipeline {
         }
       }
 
-      // Settings in ${component}/sonar-project.properties
+      // Settings in ${component}/sonar-project.properties. The Jenkins "SonarQube" installation and the
+      // "SonarQubeToken" credential (as in the other components' pipelines) give the URL and the token.
       stage('Sonar') {
         steps {
-          sh """docker run --rm --user \$(id -u):\$(id -g) \
-             -e SONAR_HOST_URL='${sonarUrl}' -e SONAR_TOKEN \
+          withSonarQubeEnv(installationName: 'SonarQube', credentialsId: 'SonarQubeToken') {
+          sh """SONAR_TOKEN="\$SONAR_AUTH_TOKEN" docker run --rm --user \$(id -u):\$(id -g) \
+             -e SONAR_HOST_URL -e SONAR_TOKEN \
              -e SONAR_SCANNER_OPTS='-Dhttp.proxyHost=proxy.multicert.dev -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.multicert.dev -Dhttps.proxyPort=8080 -Dhttp.nonProxyHosts=localhost|*.multicert.dev|*.dev.multicert.com|*.multicert.inet' \
              -v "\$PWD/${component}":/usr/src sonarsource/sonar-scanner-cli \
              -Dsonar.projectKey='${env.sonarProjectKey}' \
              -Dsonar.projectName='${env.sonarProjectName}' \
              -Dsonar.projectVersion='${env.versionSonar}' \
              -Dsonar.working.directory=/tmp/.scannerwork"""
+          }
         }
       }
 
@@ -96,7 +96,7 @@ pipeline {
 
       stage('Publish to Docker Repo') {
         steps {
-            withDockerRegistry([url: "http://${dockerRegistry}", credentialsId: 'nexus-credentials'])
+            withDockerRegistry([url: "https://${dockerRegistry}", credentialsId: 'nexus-credentials'])
             {
                 sh "docker push ${image}"
             }
