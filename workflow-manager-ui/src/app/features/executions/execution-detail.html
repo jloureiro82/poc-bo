@@ -10,6 +10,10 @@
     <div class="toolbar-actions">
       @if (run()) {
         <button class="ghost" (click)="rerunning.set(true)" title="Start a new run of the version the service runs, with this run's input">▶ Run again…</button>
+        <button class="ghost" (click)="retry()" [disabled]="!!retryBlocked() || retrying()"
+                [title]="retryBlocked() ?? 'Continue this run from where it stopped: the tasks that failed run again'">
+          {{ retrying() ? 'Retrying…' : '⟲ Retry…' }}
+        </button>
       }
       @if (definition()) {
         <button class="ghost" (click)="openDefinition()" title="Open the definition this run used in the editor">Open definition</button>
@@ -20,6 +24,9 @@
 
   @if (error().length) {
     <div class="banner error">@for (line of error(); track $index) { <div>{{ line }}</div> }</div>
+  }
+  @if (notice(); as n) {
+    <div class="banner info" role="status">{{ n }}</div>
   }
 
   @if (run(); as r) {

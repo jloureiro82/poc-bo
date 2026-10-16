@@ -18,7 +18,7 @@ export interface RunQuery {
 }
 
 /**
- * Read-only access to the execution history through the engine's own resources under `/api/v1/execution`
+ * The execution history, and retrying a run, through the engine's own resources under `/api/v1/execution`
  * (`v1.WorkflowExecutionResource`, `v1.TaskExecutionResource`). The lists take JHipster criteria filters
  * (`field.equals`, `.in`, `.contains`) and return `X-Total-Count`.
  *
@@ -56,6 +56,14 @@ export class ExecutionsApiService {
     return this.http
       .get<unknown>(this.settings.url(`/api/v1/execution/workflow/workflowid/${encodeURIComponent(workflowId)}`))
       .pipe(map(body => (body && typeof body === 'object' ? toWorkflowRun(body) : null)));
+  }
+
+  /**
+   * Retries a failed or stopped run: the service continues the same run from where it stopped
+   * (`POST …/workflow/{id}/retry`, `WorkflowService.resume`). It answers 204, or 429 when it runs too many workflows.
+   */
+  retry(workflowId: string): Observable<void> {
+    return this.http.post<void>(this.settings.url(`/api/v1/execution/workflow/${encodeURIComponent(workflowId)}/retry`), {});
   }
 
   tasks(workflowId: string): Observable<TaskRun[]> {

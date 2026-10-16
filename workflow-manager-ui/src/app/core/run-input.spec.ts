@@ -37,8 +37,15 @@ describe('reusableInput', () => {
     expect(reusableInput({ workflow: { amount: 0, type: 'b', workflowId: 'uiCheckFlow' } })).toEqual({ amount: 0, type: 'b' });
   });
 
-  it('reads an input that is not wrapped', () => {
-    expect(reusableInput({ workflowId: 'w', a: 1 })).toEqual({ a: 1 });
+  it('drops every key the service set, and keeps the rest of the body as it was', () => {
+    const inputs = { workflow: { workflowId: 'w', parentTaskExecutionId: 'p', transactionId: 't', tags: ['x'], customer: { id: 1 } } };
+    expect(reusableInput(inputs)).toEqual({ tags: ['x'], customer: { id: 1 } });
+  });
+
+  it('only reads the workflow body: other stored keys never reach the new run', () => {
+    expect(reusableInput({ workflow: { a: 1 }, context: { stackId: 's' } })).toEqual({ a: 1 });
+    expect(reusableInput({ workflowId: 'w', a: 1 })).toEqual({});
+    expect(reusableInput({ workflow: 'not an object' })).toEqual({});
     expect(reusableInput(null)).toEqual({});
   });
 });

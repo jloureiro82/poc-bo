@@ -4,7 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ConfigApiService, describeHttpError } from '../../core/config-api.service';
 import { queueOpen } from '../../core/drafts';
-import { TaskRun, WorkflowRun, buildTaskOverlay, durationMs, findTaskTrace, formatDuration, inRunOrder, runStatusOf } from '../../core/executions';
+import { TaskRun, WorkflowRun, buildTaskOverlay, durationMs, findTaskTrace, formatDuration, inRunOrder, retryRefusal, runStatusOf } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
 import { Severity } from '../../core/issues';
 import { getAt, isObject, parsePath } from '../../core/json-path';
@@ -39,6 +39,14 @@ export class ExecutionDetail {
   protected readonly rerunning = signal(false);
   /** This run's input, without what the service added, to start a new run with. */
   protected readonly rerunInput = computed(() => reusableInput(this.run()?.inputs ?? null));
+  /** Why this run cannot be retried, or `null` when it can. */
+  protected readonly retryBlocked = computed(() => {
+    const run = this.run();
+    return run ? retryRefusal(run) : 'No run loaded.';
+  });
+  protected readonly retrying = signal(false);
+  /** A one-off message above the run, e.g. after a retry. */
+  protected readonly notice = signal<string | null>(null);
   private readonly diagram = viewChild<ElementRef<HTMLElement>>('diagram');
 
   protected readonly overlay = computed(() => buildTaskOverlay(this.definition(), this.tasks()));
@@ -87,9 +95,46 @@ export class ExecutionDetail {
       untracked(() => {
         this.selectedTaskId.set(null);
         this.run.set(null);
+        this.notice.set(null);
         void this.load();
       });
     });
+  }
+
+  /**
+   * Retries this run: the service continues it from where it stopped, so the tasks that failed run again (and call
+   * what they call again). Asks first, because that cannot be undone.
+   */
+  protected async retry(): Promise<void> {
+    const run = this.run();
+    if (!run || this.retryBlocked() || this.retrying()) {
+      return;
+    }
+    if (!confirm(`Retry ${run.name} (${run.workflowId})? The service continues this run from where it stopped, so the tasks that failed run again, with their calls. This cannot be undone.`)) {
+      return;
+    }
+    this.retrying.set(true);
+    this.notice.set(null);
+    try {
+      await firstValueFrom(this.api.retry(run.workflowId));
+      this.notice.set(`Retry started for ${run.workflowId}. The run continues below; Refresh shows its progress.`);
+      await this.load();
+      // the service saves task executions asynchronously: look again shortly, if this run is still the one shown
+      setTimeout(() => {
+        if (this.workflowId() === run.workflowId && !this.loading()) {
+          void this.load();
+        }
+      }, 2500);
+    } catch (e) {
+      const status = (e as { status?: number }).status;
+      this.error.set(
+        status === 429
+          ? ['The service is running too many workflows right now (429). Try again in a moment.']
+          : describeHttpError(e),
+      );
+    } finally {
+      this.retrying.set(false);
+    }
   }
 
   protected async load(): Promise<void> {

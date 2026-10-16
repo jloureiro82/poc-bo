@@ -6,8 +6,12 @@ import { forEachTask } from './task-clipboard';
  * `workflow` (`${workflow.email}`, `${workflow['type']}`). The service adds `workflowId` to it.
  */
 
-/** Keys the service writes into the input itself (`WorkflowExecutionResource.runWorkflow`). */
-const SERVICE_INPUT_KEYS = ['workflowId'];
+/**
+ * Keys in a run's input that the service sets, not the person who starts the run: `workflowId` (added by the run
+ * endpoint, `WorkflowExecutionResource`), `parentTaskExecutionId` (when a task of another workflow started the run,
+ * `WorkflowService.internalCreate`) and `transactionId` (a failure workflow's run).
+ */
+const SERVICE_INPUT_KEYS = ['workflowId', 'parentTaskExecutionId', 'transactionId'];
 
 /**
  * A starting input for a definition: every `workflow.<path>` the expressions read, as empty text, nested by path.
@@ -68,11 +72,15 @@ export function workflowReferences(text: string): string[][] {
 }
 
 /**
- * A recorded run's input, ready to send again. The service stores the request body under `workflow`
- * (`WorkflowService.internalCreate`: `inputs = { workflow: body }`), with `workflowId` added to it.
+ * A recorded run's input, ready to send again: only the request body, which the service stores under `workflow`
+ * (`WorkflowService.internalCreate`: `inputs = { workflow: body }`), without the keys the service set in it. Anything
+ * else in the stored input is the service's own, so a run without a `workflow` body gives an empty input.
  */
 export function reusableInput(inputs: Record<string, unknown> | null): Record<string, unknown> {
-  const body = isObject(inputs?.['workflow']) ? inputs['workflow'] : (inputs ?? {});
+  const body = inputs?.['workflow'];
+  if (!isObject(body)) {
+    return {};
+  }
   return Object.fromEntries(Object.entries(body).filter(([k]) => !SERVICE_INPUT_KEYS.includes(k)));
 }
 

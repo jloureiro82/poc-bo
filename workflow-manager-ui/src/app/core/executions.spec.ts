@@ -1,4 +1,4 @@
-import { TaskRun, buildTaskOverlay, compareTaskRuns, findTaskTrace, formatDuration, inRunOrder, runStatusOf, summarizeRuns, toTaskRun, toWorkflowRun } from './executions';
+import { TaskRun, buildTaskOverlay, compareTaskRuns, findTaskTrace, formatDuration, inRunOrder, retryRefusal, runStatusOf, summarizeRuns, toTaskRun, toWorkflowRun } from './executions';
 
 const task = (id: number, label: string, status = 'COMPLETED'): TaskRun => toTaskRun({ id, label, status, workflowId: 'w', taskId: `t${id}` });
 
@@ -181,5 +181,24 @@ describe('compareTaskRuns', () => {
     ]);
     expect(rows[1].a).toEqual({ status: 'COMPLETED', attempts: 2, durationMs: 15 });
     expect(rows[2].a).toBeNull();
+  });
+});
+
+describe('retryRefusal', () => {
+  it('lets a failed or stopped top-level run be retried', () => {
+    expect(retryRefusal({ status: 'FAILED', parentId: null })).toBeNull();
+    expect(retryRefusal({ status: 'stopped', parentId: null })).toBeNull();
+  });
+
+  it('refuses other statuses and subflows, saying why', () => {
+    expect(retryRefusal({ status: 'COMPLETED', parentId: null })).toContain('failed or stopped');
+    expect(retryRefusal({ status: 'STARTED', parentId: null })).toContain('failed or stopped');
+    expect(retryRefusal({ status: 'FAILED', parentId: 'task-1' })).toContain('subflow');
+  });
+
+  it('reads the parent from either key the service uses', () => {
+    expect(toWorkflowRun({ workflowId: 'w', parentTaskExecutionId: 'p1' }).parentId).toBe('p1');
+    expect(toWorkflowRun({ workflowId: 'w', parentId: 'p2' }).parentId).toBe('p2');
+    expect(toWorkflowRun({ workflowId: 'w' }).parentId).toBeNull();
   });
 });

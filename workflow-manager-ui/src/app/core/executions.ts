@@ -25,6 +25,8 @@ export interface WorkflowRun {
   startTime: string | null;
   endTime: string | null;
   transactionId: string | null;
+  /** Set when a task of another workflow started this run (a subflow): the service's `parentTaskExecutionId`. */
+  parentId: string | null;
   messengerProvider: string | null;
   inputs: Record<string, unknown> | null;
   outputs: Record<string, unknown> | null;
@@ -74,6 +76,22 @@ export interface NodeRun {
 }
 
 /** Maps a `WorkflowStatus` / `TaskStatus` to the diagram's colour classes. */
+/**
+ * Why the service would refuse to retry a run, or `null` when it can. A retry (`POST …/workflow/{id}/retry`,
+ * `WorkflowService.resume`) continues the same run from where it stopped; it takes only a FAILED or STOPPED run, and
+ * not a subflow, which is retried through the run that started it.
+ */
+export function retryRefusal(run: Pick<WorkflowRun, 'status' | 'parentId'>): string | null {
+  const status = (run.status ?? '').toUpperCase();
+  if (status !== 'FAILED' && status !== 'STOPPED') {
+    return 'Only a failed or stopped run can be retried.';
+  }
+  if (run.parentId) {
+    return 'This run is a subflow: retry the run that started it.';
+  }
+  return null;
+}
+
 export function runStatusOf(status: string | null | undefined): RunStatus {
   switch ((status ?? '').toUpperCase()) {
     case 'COMPLETED':
@@ -109,6 +127,7 @@ export function toWorkflowRun(raw: unknown): WorkflowRun {
     startTime: text(r['startTime']),
     endTime: text(r['endTime']),
     transactionId: text(r['transactionId']),
+    parentId: text(r['parentTaskExecutionId']) ?? text(r['parentId']),
     messengerProvider: text(r['messengerProvider']),
     inputs: asObject(parseJson(r['inputs'])),
     outputs: asObject(parseJson(r['outputs'])),

@@ -68,7 +68,13 @@ npm run build                               # production build
     - `GET /api/v1/execution/tasks/execution/{workflowId}` also answers `500`; it is not used.
   - `POST /api/v1/execution/workflow/{name}/run` starts a run of the **running version** with the body as input (the
     editor's Run… dialog and the execution page's Run again). A run stores that input as `{ workflow: <body> }` with
-    `workflowId` added; `reusableInput` unwraps it.
+    `workflowId` added (and `parentTaskExecutionId` / `transactionId` when the service starts it). Run again uses only
+    the `workflow` body without those keys (`reusableInput`).
+  - `POST /api/v1/execution/workflow/{id}/retry` (body `{}`) continues a FAILED or STOPPED run that is not a subflow
+    (`WorkflowService.resume` → `DefaultWorkflowExecutor.executeRestartTask`): `204`, or `429` at the run limit. The
+    execution page's Retry. **Known backend bug (2026-10-16):** when the retried task fails again, the run's error
+    becomes an NPE (`"taskExecution" is null`, from the completion of the re-dispatched task) instead of the task's
+    own error. `/rerun` and `/restart` answer `501`.
 
 ## Deployment (Docker, micro frontend)
 
