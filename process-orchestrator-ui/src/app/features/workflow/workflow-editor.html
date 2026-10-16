@@ -1,4 +1,5 @@
 <div class="editor">
+  <app-editor-tabs [tabs]="tabLabels()" [active]="tabs().active" (select)="selectTab($event)" (close)="closeTab($event)" (add)="reset('blank')" />
   <header class="toolbar">
     <h1>Workflow <span class="muted">{{ config().label || '(no label)' }}</span></h1>
     <div class="toolbar-actions">
@@ -9,8 +10,8 @@
       <button class="ghost" (click)="reset('blank')">New</button>
       <button class="ghost" (click)="reset('sample')">Sample</button>
       <button class="ghost drafts-toggle" (click)="toggleDrafts($event)" [attr.aria-expanded]="!!draftsMenu()" aria-haspopup="menu"
-              title="Earlier documents, kept when you open another one">
-        Drafts{{ savedDrafts().length ? ' (' + savedDrafts().length + ')' : '' }} ▾
+              title="Tabs you closed; reopen one here">
+        Closed tabs{{ savedDrafts().length ? ' (' + savedDrafts().length + ')' : '' }} ▾
       </button>
       <label class="button ghost">Import<input type="file" accept=".json,application/json" hidden (change)="importFile($event)" /></label>
       <button class="ghost" (click)="exportFile()">Export</button>
@@ -356,22 +357,21 @@
   <app-shortcuts-dialog (closed)="showShortcuts.set(false)" />
 }
 @if (draftsMenu(); as pos) {
-  <div class="drafts-menu" role="menu" aria-label="Drafts" [style.top.px]="pos.top" [style.right.px]="pos.right"
+  <div class="drafts-menu" role="menu" aria-label="Closed tabs" [style.top.px]="pos.top" [style.right.px]="pos.right"
        (keydown.escape)="draftsMenu.set(null)">
     <div class="drafts-head">
-      <span class="muted small">Kept when you open another document. The newest {{ maxDrafts }} are kept.</span>
-      <button class="ghost small-btn" role="menuitem" (click)="keepCopy()">Keep a copy of this one</button>
+      <span class="muted small">Kept when you close a tab. The newest {{ maxDrafts }} are kept.</span>
     </div>
     @for (d of savedDrafts(); track d.id) {
       <div class="draft-row">
-        <button class="draft-open" role="menuitem" (click)="openDraft(d)" [title]="'Open ' + (d.name || '(no label)') + '; the open document takes its place here'">
+        <button class="draft-open" role="menuitem" (click)="openDraft(d)" [title]="'Reopen ' + (d.name || '(no label)') + ' in a tab'">
           <strong>{{ d.name || '(no label)' }}</strong>
           <span class="muted small">{{ draftTasks(d) }} task{{ draftTasks(d) === 1 ? '' : 's' }} · {{ d.savedAt | date: 'MMM d, HH:mm' }}</span>
         </button>
-        <button class="icon danger" title="Remove this draft" [attr.aria-label]="'Remove draft ' + (d.name || '(no label)')" (click)="forget(d, $event)">✕</button>
+        <button class="icon danger" title="Forget it" [attr.aria-label]="'Forget ' + (d.name || '(no label)')" (click)="forget(d, $event)">✕</button>
       </div>
     } @empty {
-      <p class="muted small draft-empty">No drafts yet. Opening another document keeps the current one here.</p>
+      <p class="muted small draft-empty">No closed tabs yet. Closing a tab keeps its document here.</p>
     }
   </div>
 }

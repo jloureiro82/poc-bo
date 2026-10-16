@@ -1,7 +1,8 @@
 import { DatePipe } from '@angular/common';
 import { Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { AnyEnvelope, toStored } from '../../core/config-api.service';
-import { MAX_SAVED_DRAFTS, SavedDraft, forgetDraft, keepDraft, listSavedDrafts, loadDraft, saveDraft, takeQueuedOpen, unwrapImported } from '../../core/drafts';
+import { MAX_SAVED_DRAFTS, SavedDraft, forgetDraft, keepDraft, listSavedDrafts, loadTabs, saveTabs, takeQueuedOpen, unwrapImported } from '../../core/drafts';
+import { TabsState, activeTab, closeTab, openTab, selectTab, updateActive } from '../../core/editor-tabs';
 import { sameValue } from '../../core/diff';
 import { History } from '../../core/history';
 import { labelsIn, parseTasks, prepareForPaste } from '../../core/task-clipboard';
@@ -16,6 +17,7 @@ import { findTaskPath, moveTask as moveTaskTo } from '../../core/task-moves';
 import { caseKeyText, childTaskLists, validateWorkflow } from '../../core/workflow-validator';
 import { AutoGrow } from '../../shared/auto-grow';
 import { DiagramViewport } from '../../shared/diagram-viewport';
+import { EditorTabs, TabLabel } from '../../shared/editor-tabs';
 import { ResizeHandle } from '../../shared/resize-handle';
 import { IssuesPanel } from '../../shared/issues-panel';
 import { KeyActivate } from '../../shared/key-activate';
@@ -43,7 +45,7 @@ interface OutlineRow {
   last?: boolean;
 }
 
-/** Documents not worth keeping in the drafts list when they are replaced: the starters, untouched. */
+/** Documents not worth keeping in the closed-tabs list: the starters, untouched. */
 const PRISTINE = [newWorkflow(), sampleWorkflow()];
 
 @Component({
@@ -54,6 +56,7 @@ const PRISTINE = [newWorkflow(), sampleWorkflow()];
     AutoGrow,
     KeyActivate,
     DiagramViewport,
+    EditorTabs,
     ResizeHandle,
     IssuesPanel,
     JsonField,
@@ -80,16 +83,36 @@ export class WorkflowEditor {
   private readonly diagram = viewChild<ElementRef<HTMLElement>>('diagram');
   private readonly searchBox = viewChild<ElementRef<HTMLInputElement>>('searchBox');
 
-  /** Undo / redo. `historyTick` changes on every step so the buttons update. */
-  private readonly history = new History<WorkflowDefinition>();
+  /**
+   * The open tabs, one document each. `config` is the shown tab's document; commit() and undo / redo write it back
+   * into its tab. Each tab has its own undo history and selection, kept here by tab id (not stored).
+   */
+  protected readonly tabs = signal<TabsState<WorkflowDefinition>>(loadTabs('workflow', sampleWorkflow));
+  protected readonly tabLabels = computed<TabLabel[]>(() =>
+    this.tabs().tabs.map(t => ({ id: t.id, title: (t.id === this.tabs().active ? this.config() : t.body).label || '(no label)' })),
+  );
+  private readonly histories = new Map<string, History<WorkflowDefinition>>();
+  private readonly selections = new Map<string, string>();
+
+  /** Undo / redo of the shown tab. `historyTick` changes on every step so the buttons update. */
+  private get history(): History<WorkflowDefinition> {
+    const id = this.tabs().active;
+    let history = this.histories.get(id);
+    if (!history) {
+      history = new History<WorkflowDefinition>();
+      this.histories.set(id, history);
+    }
+    return history;
+  }
   private readonly historyTick = signal(0);
-  protected readonly canUndo = computed(() => (this.historyTick(), this.history.canUndo));
-  protected readonly canRedo = computed(() => (this.historyTick(), this.history.canRedo));
+  protected readonly canUndo = computed(() => (this.historyTick(), this.tabs(), this.history.canUndo));
+  protected readonly canRedo = computed(() => (this.historyTick(), this.tabs(), this.history.canRedo));
 
   protected readonly showShortcuts = signal(false);
   protected readonly maxDrafts = MAX_SAVED_DRAFTS;
+  /** Closed tabs, newest first (stored as the saved drafts list). */
   protected readonly savedDrafts = signal<SavedDraft[]>(listSavedDrafts('workflow'));
-  /** Position of the open drafts menu (fixed, so no panel clips it), or `null`. */
+  /** Position of the open closed-tabs menu (fixed, so no panel clips it), or `null`. */
   protected readonly draftsMenu = signal<{ top: number; right: number } | null>(null);
 
   /** Find box: matching task paths, in outline order. */
@@ -108,11 +131,7 @@ export class WorkflowEditor {
   protected readonly dropKey = signal<string | null>(null);
   private dragFrom: JsonPath | null = null;
 
-  private readonly queued = takeQueuedOpen<WorkflowDefinition>('workflow');
-
-  protected readonly config = signal<WorkflowDefinition>(
-    this.queued?.body ?? loadDraft<WorkflowDefinition>('workflow') ?? sampleWorkflow(),
-  );
+  protected readonly config = signal<WorkflowDefinition>(activeTab(this.tabs()).body);
   protected readonly selectedPath = signal('');
   protected readonly tab = signal<'visual' | 'json'>('visual');
   protected readonly publishing = signal(false);
@@ -175,36 +194,65 @@ export class WorkflowEditor {
   protected readonly caseKeyText = caseKeyText;
 
   constructor() {
-    // Opening a stored version or a run's definition replaces the draft; keep the draft it replaces.
-    const previous = this.queued ? loadDraft<WorkflowDefinition>('workflow') : null;
-    const kept = !!previous && !sameValue(previous, this.queued!.body) && this.keep(previous);
-    if (this.queued?.note || kept) {
-      this.flash([this.queued?.note, kept ? 'Your previous document is under Drafts.' : ''].filter(Boolean).join(' '), 8000);
+    // A stored version or a run's definition handed over by another page opens in a tab of its own.
+    const queued = takeQueuedOpen<WorkflowDefinition>('workflow');
+    if (queued) {
+      this.openDocument(queued.body, 'The workflow', { reuse: true, note: queued.note });
     }
-    effect(() => saveDraft('workflow', this.config()));
+    effect(() => saveTabs('workflow', this.tabs()));
     if (this.catalog.workflows() === null && !this.catalog.loading()) {
       void this.catalog.refresh();
     }
   }
 
-  // ---- document-level actions ----------------------------------------------------------------------------------
+  // ---- tabs and document-level actions -----------------------------------------------------------------------
 
   protected reset(kind: 'blank' | 'sample'): void {
-    this.replaceDocument(kind === 'blank' ? newWorkflow() : sampleWorkflow(), kind === 'blank' ? 'New workflow' : 'Sample workflow');
+    this.openDocument(kind === 'blank' ? newWorkflow() : sampleWorkflow(), kind === 'blank' ? 'New workflow' : 'Sample workflow');
   }
 
   /**
-   * Puts another document in the editor. The one it replaces goes to the drafts list, and the change can be undone,
-   * so nothing is lost and no confirmation is needed.
+   * Opens a document in a new tab next to the shown one; the open tabs stay as they are. With `reuse`, a tab that
+   * already holds the same document is shown instead.
    */
-  private replaceDocument(next: WorkflowDefinition, what: string): void {
-    const kept = this.keep(this.config());
-    this.commit(next);
-    this.selectedPath.set('');
-    this.flash(`${what} opened.${kept ? ' The previous document is under Drafts.' : ''} Ctrl+Z undoes this.`, 5000);
+  private openDocument(next: WorkflowDefinition, what: string, options: { reuse?: boolean; note?: string } = {}): void {
+    const before = this.tabs().tabs.length;
+    this.show(openTab(this.tabs(), next, { reuse: options.reuse }));
+    const opened = this.tabs().tabs.length > before ? `${what} opened in a new tab.` : `${what} is already open in this tab.`;
+    this.flash([options.note, opened].filter(Boolean).join(' '), options.note ? 8000 : 4000);
   }
 
-  /** Adds a document to the drafts list, unless it is an untouched starter. Returns whether it did. */
+  protected selectTab(id: string): void {
+    this.show(selectTab(this.tabs(), id));
+  }
+
+  /** Closes a tab without asking: its document goes to Closed tabs (unless it is an untouched starter). */
+  protected closeTab(id: string): void {
+    const tab = this.tabs().tabs.find(t => t.id === id);
+    if (!tab) {
+      return;
+    }
+    const body = id === this.tabs().active ? this.config() : tab.body;
+    const kept = this.keep(body);
+    this.show(closeTab(this.tabs(), id, newWorkflow));
+    this.histories.delete(id);
+    this.selections.delete(id);
+    this.flash(`Closed “${body.label || '(no label)'}”.${kept ? ' Closed tabs reopens it.' : ''}`);
+  }
+
+  /** Makes `next` the tab state and shows its active tab, keeping each tab's selection. */
+  private show(next: TabsState<WorkflowDefinition>): void {
+    const current = this.tabs();
+    this.selections.set(current.active, this.selectedPath());
+    this.tabs.set(next);
+    if (next.active !== current.active || activeTab(next).body !== this.config()) {
+      this.config.set(activeTab(next).body);
+      this.selectedPath.set(this.selections.get(next.active) ?? '');
+    }
+    this.historyTick.update(n => n + 1);
+  }
+
+  /** Adds a document to the closed-tabs list, unless it is an untouched starter. Returns whether it did. */
   private keep(doc: WorkflowDefinition): boolean {
     if (PRISTINE.some(p => sameValue(p, doc))) {
       return false;
@@ -222,7 +270,13 @@ export class WorkflowEditor {
       return;
     }
     this.history.record(current, group);
-    this.config.set(next);
+    this.setDocument(next);
+  }
+
+  /** Shows `doc` and writes it into the shown tab. commit() and undo / redo come through here. */
+  private setDocument(doc: WorkflowDefinition): void {
+    this.config.set(doc);
+    this.tabs.update(s => updateActive(s, doc));
     this.historyTick.update(n => n + 1);
   }
 
@@ -239,15 +293,14 @@ export class WorkflowEditor {
       this.flash(nothing, 1500);
       return;
     }
-    this.config.set(doc);
-    this.historyTick.update(n => n + 1);
+    this.setDocument(doc);
     // keep the selection when that task still exists
     if (this.selectedPath() && !isObject(getAt(doc, parsePath(this.selectedPath())))) {
       this.selectedPath.set('');
     }
   }
 
-  // ---- drafts ------------------------------------------------------------------------------------------------------
+  // ---- closed tabs -------------------------------------------------------------------------------------------------
 
   protected toggleDrafts(event: MouseEvent): void {
     if (this.draftsMenu()) {
@@ -265,15 +318,9 @@ export class WorkflowEditor {
     if (!isObject(draft.body)) {
       return;
     }
-    // swap: the open document takes the draft's place in the list
+    // reopened: it leaves the list, and comes back to it if its tab is closed again
     this.savedDrafts.set(forgetDraft('workflow', draft.id));
-    this.replaceDocument(draft.body as WorkflowDefinition, `Draft “${draft.name || '(no label)'}”`);
-  }
-
-  protected keepCopy(): void {
-    this.draftsMenu.set(null);
-    this.savedDrafts.set(keepDraft('workflow', this.config()));
-    this.flash('A copy of the document is under Drafts');
+    this.openDocument(draft.body as WorkflowDefinition, `“${draft.name || '(no label)'}”`, { reuse: true });
   }
 
   protected forget(draft: SavedDraft, event: Event): void {
@@ -534,7 +581,7 @@ export class WorkflowEditor {
       if (!isObject(parsed)) {
         throw new Error('the file does not contain a JSON object');
       }
-      this.replaceDocument(parsed as WorkflowDefinition, file.name);
+      this.openDocument(parsed as WorkflowDefinition, file.name, { reuse: true });
     } catch (e) {
       alert(`Could not import ${file.name}: ${(e as Error).message}`);
     }

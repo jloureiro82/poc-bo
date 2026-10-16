@@ -34,6 +34,7 @@ core/                                     framework-free logic (plus a few root 
   task-clipboard.ts         copy / paste / duplicate: parseTasks(), prepareForPaste() (renames taken labels and the
                             execution.<label> references to them), labelsIn(), forEachTask()
   history.ts                History<T>: undo / redo, quick edits of one field merge into one step
+  editor-tabs.ts            open tabs (pure): openTab() / closeTab() / selectTab() / updateActive(), validTabs()
   diff.ts                   diffWorkflows() (tasks by label), diffOrchestrators() (steps by label, activities by step and
                             label), moves by LCS; diffValues(), preview()
   run-input.ts              requestContextSkeleton() (the workflow.requestContext.<path> keys the flow's workflows
@@ -41,7 +42,8 @@ core/                                     framework-free logic (plus a few root 
   executions.ts             trace types, buildRunOverlay() (traces → diagram colours), summarizeFlows() (health),
                             compareActivityRuns(), formatting
   samples.ts                starter documents
-  drafts.ts                 localStorage drafts; saved drafts list (keepDraft / listSavedDrafts / forgetDraft);
+  drafts.ts                 open tabs in localStorage (loadTabs / saveTabs; the old single draft becomes the first
+                            tab once); closed-tabs list (keepDraft / listSavedDrafts / forgetDraft);
                             queueOpen()/takeQueuedOpen() hand-off between pages
   config-api.service.ts     /api/v1/{workflow|orchestrator}: list, versions, active, create, activate/…
   executions-api.service.ts flow-traces (and latest(flowName)), step-traces, orchestrator-execution-traces (one flow or
@@ -54,6 +56,7 @@ core/                                     framework-free logic (plus a few root 
 
 shared/                     reusable UI
   diagram-viewport.ts       scroll + zoom (CSS zoom) + pan + Fit; reports available width
+  editor-tabs.ts            the tab bar above an editor (select, close, middle-click close, +)
   issues-panel.ts           validation list
   json-field.ts             JSON value editor (object fields)
   json-document.ts          whole-document JSON tab
@@ -99,7 +102,7 @@ for its panels. That section must stay before the Overview sections.
               ▼                                                                              │
    config: signal<Config>  ──computed──►  issues  ──► severityByNode ──► outline / diagram / panel
               │                       └─► layout (orchestrator) / rootItems (workflow) ──► diagram
-              └──effect──► saveDraft (localStorage)
+              └──setDocument──► tabs (the shown tab) ──effect──► saveTabs (localStorage)
    WorkflowCatalogService.catalog ───────► (input to validation: reference checks)
 ```
 
@@ -114,9 +117,14 @@ that runs **after**.
 **Every edit goes through the editor's `commit(next, group?)`**, which records the document it replaces in `History`.
 Never `config.set` directly, or the edit cannot be undone. `group` is the edited field's path: quick edits of the same
 field (typing) undo as one step. Undo / redo bind Ctrl+Z / Ctrl+Y at the document level, also inside fields, because
-bound field values break the browser's own undo. Deleting a node or replacing the document (New, Sample, Import, a
-draft) asks no confirmation: it can be undone, and a replaced document goes to the drafts list first (`keep()`;
-untouched starters are not kept).
+bound field values break the browser's own undo. commit() and undo / redo write the document into the shown tab
+(`setDocument()`). Deleting a node asks no confirmation: it can be undone.
+
+**Tabs** (both editors): each open document is a tab (`tabs: signal<TabsState>`; `config` is the shown tab's
+document). New, Sample, Import, a stored version and a run's configuration open in a new tab (`openDocument()`);
+Import, stored versions and reopened tabs show an open tab holding the same document instead. Each tab has its own
+`History` and selection, kept in memory by tab id. Closing a tab asks no confirmation: its document goes to the
+closed-tabs list first (`keep()`; untouched starters are not kept), and closing the last tab leaves a new one.
 
 Keyboard: both editors listen on `document`. Keys other than undo, redo and Ctrl+F apply only when focus is not in a
 text field (`isTyping`). The workflow editor also handles `copy` / `cut` / `paste` (tasks as JSON, pasted after the
@@ -212,7 +220,7 @@ Create a standalone component under `features/…`, add a lazy route in `app.rou
 `npm test` runs Vitest over:
 
 - `core/*.spec.ts`: validators, SpEL, DAG and layout, moves, execution mapping, history, diff, clipboard, run input,
-  saved drafts, flow summary and comparison;
+  open and closed tabs, flow summary and comparison;
 - `app.spec.ts`.
 
 Components are verified in a real browser with `tools/browser.mjs` (see [CLAUDE.md](../CLAUDE.md)).

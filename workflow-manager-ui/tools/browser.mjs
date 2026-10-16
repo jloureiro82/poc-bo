@@ -59,12 +59,15 @@ export async function connect(port = 9333) {
       await send('Page.reload');
       await sleep(wait);
     },
-    /** Replaces an editor draft (localStorage) so the next load starts from a known document. */
+    /** Replaces an editor's tabs (localStorage) with one tab holding `doc`, so the next load starts from it. */
     async setDraft(kind, doc) {
-      await page.eval(`localStorage.setItem('wm-ui.draft.${kind}', ${JSON.stringify(JSON.stringify(doc))}); true`);
+      const tabs = { tabs: [{ id: 'check', body: doc }], active: 'check' };
+      await page.eval(`localStorage.setItem('wm-ui.tabs.${kind}', ${JSON.stringify(JSON.stringify(tabs))}); true`);
     },
+    /** The document in the editor's shown tab, as stored. */
     async draft(kind) {
-      return JSON.parse(await page.eval(`localStorage.getItem('wm-ui.draft.${kind}')`));
+      const tabs = JSON.parse(await page.eval(`localStorage.getItem('wm-ui.tabs.${kind}')`));
+      return tabs?.tabs.find(t => t.id === tabs.active)?.body ?? null;
     },
     /** Centre of the element a JS expression returns, in window coordinates. */
     async center(elementExpression) {

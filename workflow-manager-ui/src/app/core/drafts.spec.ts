@@ -1,4 +1,5 @@
-import { MAX_SAVED_DRAFTS, forgetDraft, keepDraft, listSavedDrafts } from './drafts';
+import { MAX_SAVED_DRAFTS, forgetDraft, keepDraft, listSavedDrafts, loadTabs, saveTabs } from './drafts';
+import { activeTab, openTab, singleTab } from './editor-tabs';
 
 describe('saved drafts', () => {
   beforeEach(() => localStorage.clear());
@@ -40,5 +41,29 @@ describe('saved drafts', () => {
   it('reads a damaged list as empty', () => {
     localStorage.setItem('wm-ui.drafts.workflow', '{oops');
     expect(listSavedDrafts('workflow')).toEqual([]);
+  });
+});
+
+describe('open tabs', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('reopens the tabs saved last, with the same one shown', () => {
+    const state = openTab(singleTab({ name: 'a' }, 'a'), { name: 'b' }, { id: 'b' });
+    saveTabs('workflow', state);
+    expect(loadTabs('workflow', () => ({ name: 'starter' }))).toEqual(state);
+  });
+
+  it('turns the single draft kept before tabs into the first tab, once', () => {
+    localStorage.setItem('wm-ui.draft.workflow', JSON.stringify({ name: 'old' }));
+    const state = loadTabs('workflow', () => ({ name: 'starter' }));
+    expect(state.tabs.map(t => t.body)).toEqual([{ name: 'old' }]);
+    saveTabs('workflow', state);
+    expect(localStorage.getItem('wm-ui.draft.workflow')).toBeNull();
+  });
+
+  it('starts with the starter when nothing is stored or the stored tabs are damaged', () => {
+    expect(activeTab(loadTabs('workflow', () => ({ name: 'starter' }))).body).toEqual({ name: 'starter' });
+    localStorage.setItem('wm-ui.tabs.workflow', '{oops');
+    expect(activeTab(loadTabs('workflow', () => ({ name: 'starter' }))).body).toEqual({ name: 'starter' });
   });
 });

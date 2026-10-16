@@ -1,4 +1,5 @@
-import { MAX_SAVED_DRAFTS, forgetDraft, keepDraft, listSavedDrafts } from './drafts';
+import { MAX_SAVED_DRAFTS, forgetDraft, keepDraft, listSavedDrafts, loadTabs, saveTabs } from './drafts';
+import { activeTab, openTab, singleTab } from './editor-tabs';
 
 describe('saved drafts', () => {
   beforeEach(() => localStorage.clear());
@@ -47,5 +48,34 @@ describe('saved drafts', () => {
   it('reads a damaged list as empty', () => {
     localStorage.setItem('po-ui.drafts.workflow', '{oops');
     expect(listSavedDrafts('workflow')).toEqual([]);
+  });
+});
+
+describe('open tabs', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('reopens the tabs saved last, with the same one shown', () => {
+    const state = openTab(singleTab({ label: 'a' }, 'a'), { label: 'b' }, { id: 'b' });
+    saveTabs('workflow', state);
+    expect(loadTabs('workflow', () => ({ label: 'starter' }))).toEqual(state);
+  });
+
+  it('turns the single draft kept before tabs into the first tab, once', () => {
+    localStorage.setItem('po-ui.draft.workflow', JSON.stringify({ label: 'old' }));
+    const state = loadTabs('workflow', () => ({ label: 'starter' }));
+    expect(state.tabs.map(t => t.body)).toEqual([{ label: 'old' }]);
+    saveTabs('workflow', state);
+    expect(localStorage.getItem('po-ui.draft.workflow')).toBeNull();
+  });
+
+  it('starts with the starter when nothing is stored or the stored tabs are damaged', () => {
+    expect(activeTab(loadTabs('workflow', () => ({ label: 'starter' }))).body).toEqual({ label: 'starter' });
+    localStorage.setItem('po-ui.tabs.workflow', '{oops');
+    expect(activeTab(loadTabs('workflow', () => ({ label: 'starter' }))).body).toEqual({ label: 'starter' });
+  });
+
+  it('keeps each editor kind apart', () => {
+    saveTabs('workflow', singleTab({ label: 'w' }, 'w'));
+    expect(activeTab(loadTabs('orchestrator', () => ({ label: 'o' }))).body).toEqual({ label: 'o' });
   });
 });

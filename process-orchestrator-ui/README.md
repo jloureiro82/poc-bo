@@ -88,7 +88,7 @@ wrong application.
 
 Things the app remembers in the browser (`localStorage`):
 
-- the open orchestrator and workflow drafts (`po-ui.draft.*`);
+- the open tabs of the orchestrator and workflow editors (`po-ui.tabs.*`), and their closed tabs (`po-ui.drafts.*`);
 - the connection settings (`po-ui.settings`);
 - the side-panel widths (`po-ui.panels`).
 

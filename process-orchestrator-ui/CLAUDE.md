@@ -6,7 +6,7 @@ Read [docs/architecture.md](docs/architecture.md) for the code layout and
 [docs/validation-rules.md](docs/validation-rules.md) for every rule and its backend source.
 
 The sibling `../workflow-manager-ui` (Workflow Configurator) was copied from this app and shares the workflow editor,
-the diagrams, the SpEL checker, the styles, and the editor and execution features (undo/redo, drafts, find,
+the diagrams, the SpEL checker, the styles, and the editor and execution features (undo/redo, tabs, find,
 shortcuts, copy/paste of tasks, publish change list, run dialogs, run comparison and health, picture export). When a
 fix applies to both, make it in both.
 
@@ -122,8 +122,10 @@ Lessons learned:
 - Match text with `textContent`: `innerText` follows CSS `text-transform` (e.g. "Failed" vs "failed").
 - Elements outside the window cannot be clicked. Long menus scroll, and wrapped diagram rows can sit below the fold.
 - Synthetic `className` reads right after dispatching an event see the state *before* Angular re-renders.
-- Seed a known document with `page.setDraft('workflow' | 'orchestrator', doc)` and reload, rather than clicking
-  through *New*. `page.open()` to the route already shown changes nothing (hash routing, same component): open another
+- In Git Bash, run check scripts that take a route with `MSYS_NO_PATHCONV=1`: otherwise `/workflow` reaches node as
+  `C:/Program Files/Git/workflow`, and the app's `**` route silently shows its default editor instead.
+- Seed a known document with `page.setDraft('workflow' | 'orchestrator', doc)` (it replaces the editor's tabs with one
+  tab) and reload, rather than clicking through *New*. `page.open()` to the route already shown changes nothing (hash routing, same component): open another
   route first, or `page.reload()`. The same goes for `localStorage['po-ui.design']`: reload after setting it.
 - Saved pictures (SVG/PNG) download: allow it with `page.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath })`.
 - An editor's document changes only through `commit()` (undo history); see "Data flow in an editor" in the

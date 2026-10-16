@@ -72,10 +72,19 @@ Both editors share the same layout.
 **Resizing panels**: drag the edge between a side panel and the diagram. The edge highlights blue when you hover
 it. Double-click it to reset. Widths are remembered, and both editors share them.
 
-**Toolbar**: *New* (empty document) · *Sample* · *Import* (a `.json` file, either a bare definition or a full
-create request) · *Export* · *Copy JSON* · *Publish*.
+**Toolbar**: *New* (empty document) · *Sample* · *Closed tabs* · *Import* (a `.json` file, either a bare definition
+or a full create request) · *Export* · *Copy JSON* · *Publish*. New, Sample and Import open in a new tab.
 
-Your work is saved in the browser as a draft, so a reload does not lose it.
+### Tabs
+
+Each open document has a tab above the toolbar, so you can work on several at once. Click a tab to switch to it.
+Each tab keeps its own undo history and selection. **+** opens a new document. **✕** (or a middle click) closes a
+tab without asking: it goes to **Closed tabs** in the toolbar, which reopens it (the newest 20 are kept). Closing
+the last tab leaves a new one. New, Sample, Import, and opening a stored version or a run's configuration each open in a
+new tab; if that exact document is already open, its tab is shown instead.
+
+Your tabs are kept in the browser, so a reload reopens them. They are kept per browser: two browser windows on the
+same editor overwrite each other's tabs, so edit in one window.
 
 ---
 

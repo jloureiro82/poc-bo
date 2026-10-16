@@ -1,30 +1,41 @@
+import { TabsState, singleTab, validTabs } from './editor-tabs';
 import { ConfigKind } from './model';
 
-/** The document currently open in each editor, kept in localStorage so a reload does not lose work. */
+/** The tabs open in each editor, kept in localStorage so a reload reopens them. */
 
-const key = (kind: ConfigKind) => `wm-ui.draft.${kind}`;
+const tabsKey = (kind: ConfigKind) => `wm-ui.tabs.${kind}`;
+/** Before tabs, each editor kept one document here. It becomes the first tab, once. */
+const oldDraftKey = (kind: ConfigKind) => `wm-ui.draft.${kind}`;
 
-export function loadDraft<T>(kind: ConfigKind): T | null {
+export function loadTabs<T>(kind: ConfigKind, starter: () => T): TabsState<T> {
   try {
-    const raw = localStorage.getItem(key(kind));
-    return raw ? (JSON.parse(raw) as T) : null;
+    const stored = validTabs<T>(JSON.parse(localStorage.getItem(tabsKey(kind)) ?? 'null'));
+    if (stored) {
+      return stored;
+    }
+    const old = JSON.parse(localStorage.getItem(oldDraftKey(kind)) ?? 'null');
+    if (old && typeof old === 'object') {
+      return singleTab(old as T);
+    }
   } catch {
-    return null;
+    // unreadable storage: start fresh
   }
+  return singleTab(starter());
 }
 
-export function saveDraft(kind: ConfigKind, value: unknown): void {
+export function saveTabs(kind: ConfigKind, state: TabsState): void {
   try {
-    localStorage.setItem(key(kind), JSON.stringify(value));
+    localStorage.setItem(tabsKey(kind), JSON.stringify(state));
+    localStorage.removeItem(oldDraftKey(kind));
   } catch {
-    // storage unavailable: the draft only lives in memory
+    // storage unavailable or full: the tabs only live in memory
   }
 }
 
 /**
- * Earlier drafts. When the editor's document is replaced (New, Sample, Import, opening a stored version or a run's
- * definition, opening another saved draft), the document it held is kept here first, so switching never loses work.
- * Newest first; a document identical to one already kept is not kept twice.
+ * Closed tabs. A closed tab's document is kept here, so closing never loses work; the editor's "Closed tabs" menu
+ * reopens it. Newest first; a document identical to one already kept is not kept twice. (Before tabs, this list held
+ * the documents an editor replaced, so those appear here too.)
  */
 export interface SavedDraft {
   id: string;
@@ -69,7 +80,7 @@ function writeSaved(kind: ConfigKind, list: SavedDraft[]): SavedDraft[] {
   return list;
 }
 
-/** Hand-off from the library page to an editor ("open this stored version"). */
+/** Hand-off from the library page to an editor ("open this stored version"): the editor opens it in a new tab. */
 let pending: { kind: ConfigKind; body: unknown; note?: string } | null = null;
 
 export function queueOpen(kind: ConfigKind, body: unknown, note?: string): void {

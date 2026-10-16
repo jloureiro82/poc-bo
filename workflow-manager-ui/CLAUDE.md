@@ -7,7 +7,7 @@ Read [docs/architecture.md](docs/architecture.md) for the code layout and
 
 It was created as a copy of `../process-orchestrator-ui` (the Flow Configurator for process-orchestrator) and
 adapted. The two share the editor, the diagram, the SpEL checker, all styles, and the editor and execution features
-(undo/redo, drafts, find, shortcuts, copy/paste of tasks, publish change list, run dialogs, run comparison and health,
+(undo/redo, tabs, find, shortcuts, copy/paste of tasks, publish change list, run dialogs, run comparison and health,
 picture export). When a fix applies to both, make it in both. workflow-manager has no orchestrators, so this app has no
 orchestrator editor. In process-orchestrator, flows are started from the orchestrator editor, not from a workflow.
 
@@ -157,8 +157,10 @@ Lessons learned:
 - Match text with `textContent`: `innerText` follows CSS `text-transform` (e.g. "Failed" vs "failed").
 - Elements outside the window cannot be clicked. Long menus scroll, and wrapped diagram rows can sit below the fold.
 - Synthetic `className` reads right after dispatching an event see the state *before* Angular re-renders.
-- Seed a known document with `page.setDraft('workflow', doc)` and reload, rather than clicking through *New*.
-  `page.open()` to the route already shown changes nothing (hash routing, same component), so the editor keeps its
+- In Git Bash, run check scripts that take a route with `MSYS_NO_PATHCONV=1`: otherwise `/workflow` reaches node as
+  `C:/Program Files/Git/workflow`, and the app's `**` route silently shows its default editor instead.
+- Seed a known document with `page.setDraft('workflow', doc)` (it replaces the editor's tabs with one tab) and reload,
+  rather than clicking through *New*. `page.open()` to the route already shown changes nothing (hash routing, same component), so the editor keeps its
   document: open another route first, or `page.reload()`. The same goes for `localStorage['wm-ui.design']`: reload after
   setting it, or the running app writes its current design back.
 - Saved pictures (SVG/PNG) download: allow it with `page.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath })`.

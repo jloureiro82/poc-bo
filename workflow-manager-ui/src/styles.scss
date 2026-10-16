@@ -2271,6 +2271,67 @@ button.draft-open {
   margin: 0;
 }
 
+/* editor tabs: one per open document, above the toolbar; scrolls sideways when there are many */
+.editor-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  margin: 0 7px;
+  padding: 6px 4px 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.editor-tab {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  max-width: 240px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.editor-tab.active {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+button.editor-tab-open {
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  padding: 5px 4px 5px 12px;
+  font-size: 12.5px;
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+button.editor-tab-close,
+button.editor-tab-add {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 4px 8px;
+  font-size: 11px;
+  line-height: 1;
+}
+button.editor-tab-close:hover {
+  color: var(--text);
+}
+button.editor-tab-add {
+  flex: 0 0 auto;
+  align-self: center;
+  font-size: 16px;
+  padding: 4px 10px;
+}
+button.editor-tab-add:hover {
+  color: var(--accent);
+}
+
 /* find */
 .outline-find {
   position: sticky;

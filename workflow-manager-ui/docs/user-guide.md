@@ -31,16 +31,27 @@ The page has three columns and a validation bar:
 - **Inspector** (right): a form for the selected task, or for the workflow when nothing is selected.
 - **Validation** (bottom): every problem found. Click one to go to its task and field.
 
-Your work is kept in the browser as a draft, so a reload does not lose it. Nothing reaches the service until you
-publish.
+Nothing reaches the service until you publish.
+
+### Tabs
+
+Each open workflow has a tab above the toolbar, so you can work on several at once. Click a tab to switch to it.
+Each tab keeps its own undo history and selection. **+** opens a new workflow. **✕** (or a middle click) closes a
+tab without asking: it goes to **Closed tabs** in the toolbar, which reopens it (the newest 20 are kept). Closing
+the last tab leaves a new one. New, Sample, Import, and opening a stored version or a run's definition each open in a
+new tab; if that exact document is already open, its tab is shown instead.
+
+Your tabs are kept in the browser, so a reload reopens them. They are kept per browser: two browser windows on the
+same editor overwrite each other's tabs, so edit in one window.
 
 ### Toolbar
 
 | Button | What it does |
 |---|---|
-| **New** | Replaces the document with a one-task workflow. |
-| **Sample** | Replaces the document with a sample that uses a decision, notifications and an HTTP call. |
-| **Import** | Opens a JSON file: a bare definition, a full create request, or a stored version from the service. |
+| **New** | Opens a one-task workflow in a new tab. |
+| **Sample** | Opens a sample that uses a decision, notifications and an HTTP call, in a new tab. |
+| **Closed tabs** | Lists the tabs you closed; click one to reopen it, ✕ to forget it. |
+| **Import** | Opens a JSON file in a new tab: a bare definition, a full create request, or a stored version from the service. |
 | **Export** | Saves the definition as `<name>.json`. |
 | **Copy JSON** | Copies the definition to the clipboard. |
 | **Publish** | Creates a new version in the service. Disabled while any error remains. |
