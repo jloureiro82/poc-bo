@@ -1,5 +1,5 @@
 // Checks and publishes the configurator-portal image (nginx, no app code, so no unit tests).
-// Jenkins job: multibranch pipeline on this repository, Script Path "configurator-portal/ci/Jenkinsfile".
+// Jenkins job: pipeline (or multibranch pipeline) on this repository, Script Path "configurator-portal/ci/Jenkinsfile".
 // Image name: ${dockerRegistry}/${dockerRepo}/${project}/${component}:<version>
 // The version comes from ${component}/VERSION ("-snapshot" is added on develop).
 // process-orchestrator-ui/ci/Jenkinsfile is a copy of this file: keep them in step.
@@ -40,10 +40,12 @@ pipeline {
               env.version = sh(returnStdout: true, script: command).trim();
               env.versionSonar = env.version + "." + currentBuild.number
 
-              env.sonarProjectName = env.component + " " + env.BRANCH_NAME.replaceAll("/(.*)", "") + " " + env.sonarProjectNameSuffix
-              env.sonarProjectKey = env.component + "-" + env.BRANCH_NAME.replaceAll("/(.*)", "")
+              // BRANCH_NAME is set only in multibranch jobs; a plain pipeline job has GIT_BRANCH ("origin/develop")
+              env.branch = env.BRANCH_NAME ?: (env.GIT_BRANCH ?: "unknown").replaceFirst("^origin/", "")
+              env.sonarProjectName = env.component + " " + env.branch.replaceAll("/(.*)", "") + " " + env.sonarProjectNameSuffix
+              env.sonarProjectKey = env.component + "-" + env.branch.replaceAll("/(.*)", "")
 
-              if (env.BRANCH_NAME == "develop") {
+              if (env.branch == "develop") {
                   env.version = env.version + "-snapshot"
               }
 
@@ -94,7 +96,7 @@ pipeline {
       stage('Deploy DEV') {
         when {
           allOf {
-            branch "develop"
+            expression { env.branch == "develop" }
             expression { env.deployDevJob?.trim() }
           }
         }

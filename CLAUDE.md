@@ -59,7 +59,7 @@ docker compose down
 
 ## CI (`<component>/ci/Jenkinsfile`)
 
-Each component has its own pipeline, set up in Jenkins as its own multibranch job on this repository with Script Path
+Each component has its own pipeline, set up in Jenkins as its own pipeline job (plain or multibranch) on this repository with Script Path
 `<component>/ci/Jenkinsfile`. It runs from the workspace root and works on the folder named by `component`, which is
 also the image name and the Sonar project key prefix (`<component>-<branch>`).
 
