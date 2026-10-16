@@ -26,7 +26,7 @@ pipeline {
         deployDevJob = "poc-wfmanager"
         //-----------------------------------------
         // the folder this pipeline builds; also the image name
-        component = "configurator-portal"
+        component = "Configurator Deploy DEV"
     }
 
     options {
