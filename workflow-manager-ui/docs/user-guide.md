@@ -173,8 +173,8 @@ open the run.
 
 - The **header** shows the workflow name and the run's status. **Open definition** loads the definition this run
   used into the editor.
-- **Run again…** starts a **new** run of the version the service runs now, with this run's input (only what was sent
-  to it; the ids the service adds are left out).
+- **Run again…** starts a **new** run of the version the service runs now, with this run's input: what the run holds
+  under `workflow`, exactly as stored.
 - **Retry…** continues **this** run from where it stopped: the tasks that failed run again, with their calls, and the
   run keeps its id and history. Only a failed or stopped run can be retried, and not a subflow (retry the run that
   started it). It asks first, because it cannot be undone.

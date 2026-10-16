@@ -33,13 +33,16 @@ describe('inputSkeleton', () => {
 });
 
 describe('reusableInput', () => {
-  it('unwraps the request body the service keeps under `workflow`, without the id it added', () => {
-    expect(reusableInput({ workflow: { amount: 0, type: 'b', workflowId: 'uiCheckFlow' } })).toEqual({ amount: 0, type: 'b' });
+  it('takes what is inside `workflow` exactly as stored, workflowId included', () => {
+    const inputs = { workflow: { amount: 0, type: 'b', workflowId: 'uiCheckFlow', parentTaskExecutionId: 'p', customer: { id: 1 } } };
+    expect(reusableInput(inputs)).toEqual(inputs.workflow);
   });
 
-  it('drops every key the service set, and keeps the rest of the body as it was', () => {
-    const inputs = { workflow: { workflowId: 'w', parentTaskExecutionId: 'p', transactionId: 't', tags: ['x'], customer: { id: 1 } } };
-    expect(reusableInput(inputs)).toEqual({ tags: ['x'], customer: { id: 1 } });
+  it('gives a copy, so editing the input never changes the stored run', () => {
+    const inputs = { workflow: { customer: { id: 1 } } };
+    const copy = reusableInput(inputs);
+    (copy['customer'] as { id: number }).id = 2;
+    expect(inputs.workflow.customer.id).toBe(1);
   });
 
   it('only reads the workflow body: other stored keys never reach the new run', () => {

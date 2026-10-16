@@ -172,8 +172,8 @@ The run keeps each task as the engine last saved it, in its `execution` map (nes
 output and the error. `findTaskTrace` looks the selected task up there.
 
 A run keeps its input as `{ workflow: <request body> }`, with `workflowId` added (`WorkflowService.internalCreate`).
-"Run again" sends `reusableInput(inputs)`: only that body, without the keys the service sets (`workflowId`,
-`parentTaskExecutionId`, `transactionId`). "Retry" (`ExecutionsApiService.retry`, `POST …/workflow/{id}/retry`)
+"Run again" sends `reusableInput(inputs)`: that body exactly as stored (a copy; nothing inside it is removed or
+changed). "Retry" (`ExecutionsApiService.retry`, `POST …/workflow/{id}/retry`)
 continues the same run instead; `retryRefusal()` holds the service's rules (FAILED or STOPPED, not a subflow).
 
 The service runs its published version, not the editor's document. The run dialog compares the two with
