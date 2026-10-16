@@ -1,0 +1,298 @@
+<div class="editor">
+  <header class="toolbar">
+    <h1>Orchestrator <span class="muted">{{ config().label || '(no label)' }}</span></h1>
+    <div class="toolbar-actions">
+      <span class="button-group" role="group" aria-label="History">
+        <button class="ghost icon-text" (click)="undo()" [disabled]="!canUndo()" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+        <button class="ghost icon-text" (click)="redo()" [disabled]="!canRedo()" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+      </span>
+      <button class="ghost" (click)="reset('blank')">New</button>
+      <button class="ghost" (click)="reset('sample')">Sample</button>
+      <button class="ghost drafts-toggle" (click)="toggleDrafts($event)" [attr.aria-expanded]="!!draftsMenu()" aria-haspopup="menu"
+              title="Earlier documents, kept when you open another one">
+        Drafts{{ savedDrafts().length ? ' (' + savedDrafts().length + ')' : '' }} ▾
+      </button>
+      <label class="button ghost">Import<input type="file" accept=".json,application/json" hidden (change)="importFile($event)" /></label>
+      <button class="ghost" (click)="exportFile()">Export</button>
+      <button class="ghost" (click)="copyJson()">Copy JSON</button>
+      <button class="ghost icon-text" (click)="showShortcuts.set(true)" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</button>
+      <button class="ghost" (click)="catalog.refresh()" [disabled]="catalog.loading()" title="Reload the stored workflows used for reference checks">
+        {{ catalog.loading() ? 'Checking…' : '↻ Workflows' }}
+      </button>
+      <button class="ghost" (click)="running.set(true)" [disabled]="!config().label"
+              [title]="config().label ? 'Start a flow of the active version, with a request context you type' : 'Label the flow first'">
+        ▶ Run…
+      </button>
+      <button class="primary" (click)="publishing.set(true)" [disabled]="errorCount() > 0"
+              [title]="errorCount() ? 'Fix the errors first' : 'Create a new version in the service'">
+        Publish
+      </button>
+    </div>
+  </header>
+  @if (toast()) {
+    <div class="toast">{{ toast() }}</div>
+  }
+
+  <div class="editor-body" [style.--left-w]="panels.left() + 'px'" [style.--right-w]="panels.right() + 'px'">
+    <!-- Outline ------------------------------------------------------------------------------------------------->
+    <aside class="outline">
+      <div class="outline-find">
+        <input #searchBox type="search" class="search" placeholder="Find a step or activity  ( / )" aria-label="Find a step or activity by label or workflow"
+               [value]="query()" (input)="query.set(value($event))" (keydown)="onSearchKey($event)" />
+        @if (query().trim()) {
+          <span class="find-count muted small" aria-live="polite">
+            {{ matchRows().length ? (matchIndex() + 1 || '–') + ' of ' + matchRows().length : 'no match' }}
+          </span>
+          <button class="icon" title="Previous match (Shift+Enter)" aria-label="Previous match" [disabled]="!matchRows().length" (click)="nextMatch(-1)">↑</button>
+          <button class="icon" title="Next match (Enter)" aria-label="Next match" [disabled]="!matchRows().length" (click)="nextMatch(1)">↓</button>
+        }
+      </div>
+      <div class="outline-row root" [class.selected]="selectedPath() === ''" [attr.data-sev]="sev('')"
+           keyActivate [attr.aria-current]="selectedPath() === '' || null" (click)="select('')">
+        <span class="kind">flow</span><span class="row-title">{{ config().label || '(no label)' }}</span>
+      </div>
+      @for (s of steps(); track $index; let si = $index, firstStep = $first, lastStep = $last) {
+        <div class="outline-row step" [class.selected]="selectedPath() === 'stepList[' + si + ']'"
+             [attr.data-key]="'stepList[' + si + ']'" [class.match]="matchKeys()?.has('stepList[' + si + ']')"
+             [class.dim]="matchKeys() && !matchKeys()!.has('stepList[' + si + ']')"
+             [attr.data-sev]="sev('stepList[' + si + ']')" keyActivate
+             [attr.aria-current]="selectedPath() === 'stepList[' + si + ']' || null" (click)="select('stepList[' + si + ']')">
+          <span class="kind">step</span><span class="row-title">{{ s.label || '(no label)' }}</span>
+          <span class="row-actions">
+            <button class="icon" title="Move up" aria-label="Move up" [disabled]="firstStep" (click)="moveStep(si, -1); $event.stopPropagation()">↑</button>
+            <button class="icon" title="Move down" aria-label="Move down" [disabled]="lastStep" (click)="moveStep(si, 1); $event.stopPropagation()">↓</button>
+            <button class="icon danger" title="Delete step" aria-label="Delete step" (click)="removeStep(si); $event.stopPropagation()">✕</button>
+          </span>
+        </div>
+        @for (a of activitiesOf(si); track $index; let ai = $index, firstAct = $first, lastAct = $last) {
+          <div class="outline-row activity" [class.selected]="selectedPath() === 'stepList[' + si + '].activityList[' + ai + ']'"
+               [attr.data-key]="'stepList[' + si + '].activityList[' + ai + ']'"
+               [class.match]="matchKeys()?.has('stepList[' + si + '].activityList[' + ai + ']')"
+               [class.dim]="matchKeys() && !matchKeys()!.has('stepList[' + si + '].activityList[' + ai + ']')"
+               [attr.data-sev]="sev('stepList[' + si + '].activityList[' + ai + ']')" keyActivate
+               [attr.aria-current]="selectedPath() === 'stepList[' + si + '].activityList[' + ai + ']' || null"
+               (click)="select('stepList[' + si + '].activityList[' + ai + ']')">
+            <span class="kind">act</span><span class="row-title">{{ a.label || '(no label)' }}</span>
+            <span class="row-actions">
+              <button class="icon" title="Move up" aria-label="Move up" [disabled]="firstAct" (click)="moveActivity(si, ai, -1); $event.stopPropagation()">↑</button>
+              <button class="icon" title="Move down" aria-label="Move down" [disabled]="lastAct" (click)="moveActivity(si, ai, 1); $event.stopPropagation()">↓</button>
+              <button class="icon danger" title="Delete activity" aria-label="Delete activity" (click)="removeActivity(si, ai); $event.stopPropagation()">✕</button>
+            </span>
+          </div>
+        }
+        <button class="add-row" (click)="addActivity(si)">+ activity</button>
+      }
+      <button class="add-row step" (click)="addStep()">+ step</button>
+      <p class="muted small outline-hint">Press <kbd>?</kbd> for keyboard shortcuts.</p>
+    </aside>
+
+    <!-- Canvas -------------------------------------------------------------------------------------------------->
+    <main class="canvas">
+      <app-resize-handle side="left" />
+      <app-resize-handle side="right" />
+      <div class="tabs">
+        <button [class.active]="tab() === 'visual'" (click)="tab.set('visual')">Diagram</button>
+        <button [class.active]="tab() === 'json'" (click)="tab.set('json')">JSON</button>
+        @if (tab() === 'visual') {
+          <span class="tabs-extra">
+            <span class="muted small">Save picture</span>
+            <button class="ghost small-btn" (click)="exportPicture('svg')" title="Save the diagram as an SVG picture">SVG</button>
+            <button class="ghost small-btn" (click)="exportPicture('png')" title="Save the diagram as a PNG picture">PNG</button>
+          </span>
+        }
+      </div>
+      @if (tab() === 'visual') {
+        <app-orchestrator-diagram [config]="config()" [issues]="severity()" [selected]="selectedPath()" [editable]="true"
+                                  [matches]="matchKeys()" (select)="select($event)" (edit)="onDiagramEdit($event)" />
+      } @else {
+        <app-json-document [value]="config()" (valueChange)="onJsonEdited($event)" />
+      }
+    </main>
+
+    <!-- Inspector ----------------------------------------------------------------------------------------------->
+    <aside class="inspector">
+      @if (activity(); as a) {
+        <h3>Activity</h3>
+        <ul class="node-issues">@for (m of issuesAt(selectedPath()); track $index) { <li>{{ m }}</li> }</ul>
+        <label class="field"><span>Label *</span>
+          <input [attr.data-field-sev]="fieldSev('label')" [attr.aria-invalid]="fieldSev('label') === 'error' || null" [value]="a.label ?? ''" (change)="renameActivity(value($event))" />
+          <small class="muted">Renaming updates the previousActivity links of the other activities.</small>
+        </label>
+        <label class="field"><span>Workflow *</span>
+          <app-workflow-select [attr.data-field-sev]="fieldSev('workflowLabel')" [value]="a.workflowLabel ?? ''" (valueChange)="patchActivity('workflowLabel', $event)" />
+          <small class="muted">The workflow definition this activity runs.</small>
+        </label>
+        <label class="field"><span>Description</span>
+          <textarea [attr.data-field-sev]="fieldSev('description')" [attr.aria-invalid]="fieldSev('description') === 'error' || null" autoGrow singleLine class="prose" rows="1" [value]="a.description ?? ''" (input)="patchActivity('description', value($event))"></textarea>
+        </label>
+        <div class="grid2">
+          <label class="field"><span>Type</span>
+            <select [attr.data-field-sev]="fieldSev('type')" [attr.aria-invalid]="fieldSev('type') === 'error' || null" (change)="patchActivity('type', value($event))">
+              <option value="" [selected]="!a.type">(default: manual)</option>
+              @for (t of activityTypes; track t) { <option [value]="t" [selected]="a.type === t">{{ t }}</option> }
+              @if (a.type && !activityTypes.includes($any(a.type))) { <option [value]="a.type" selected>{{ a.type }} (unknown)</option> }
+            </select>
+          </label>
+          <label class="field"><span>Sync</span>
+            <select [attr.data-field-sev]="fieldSev('sync')" [attr.aria-invalid]="fieldSev('sync') === 'error' || null" (change)="patchActivity('sync', triState($event))">
+              <option value="" [selected]="boolText(a.sync) === ''">(unset)</option>
+              <option value="true" [selected]="a.sync === true">true</option>
+              <option value="false" [selected]="a.sync === false">false</option>
+            </select>
+          </label>
+        </div>
+        <fieldset [attr.data-field-sev]="fieldSev('previousActivity')">
+          <legend>Runs after</legend>
+          @for (other of activitiesOf(selection().step!); track $index) {
+            @if (other.label && other !== a) {
+              <label class="check">
+                <input type="checkbox" [checked]="a.previousActivity?.includes(other.label)"
+                       (change)="togglePreviousActivity(other.label, checked($event))" />
+                {{ other.label }}
+              </label>
+            }
+          }
+          @if (!a.previousActivity) {
+            <small class="muted">None: this is an entry activity of the step.</small>
+          }
+        </fieldset>
+        <label class="field"><span>Condition</span>
+          <textarea [attr.data-field-sev]="fieldSev('condition')" [attr.aria-invalid]="fieldSev('condition') === 'error' || null" autoGrow singleLine rows="1" spellcheck="false" [value]="a.condition ?? ''" placeholder="${...}" (input)="patchActivity('condition', value($event))"></textarea>
+        </label>
+        <app-json-field [attr.data-field-sev]="fieldSev('staticVariables')" label="Static variables" [value]="a.staticVariables" (valueChange)="patchActivity('staticVariables', $event)" />
+
+        <fieldset>
+          <legend>On failure</legend>
+          <label class="field"><span>Action</span>
+            <select [attr.data-field-sev]="fieldSev('onFailure')" [attr.aria-invalid]="fieldSev('onFailure') === 'error' || null" (change)="setFailureAction(value($event))">
+              <option value="" [selected]="!a.onFailure">(no policy)</option>
+              @for (f of failureActions; track f) { <option [value]="f" [selected]="a.onFailure?.action === f">{{ f }}</option> }
+            </select>
+            <small class="muted">
+              fail: the flow ends FAILED · hold: the flow waits ON_HOLD for retry/skip · cancel: runs the cancellation workflow.
+              Without a policy, an automaticOnFailure cancellation runs, otherwise the flow fails.
+            </small>
+          </label>
+          @if (a.onFailure?.action === 'hold') {
+            <label class="field"><span>Hold timeout</span>
+              <input [attr.data-field-sev]="fieldSev('onFailure.holdTimeout')" [attr.aria-invalid]="fieldSev('onFailure.holdTimeout') === 'error' || null" spellcheck="false" placeholder="PT24H" [value]="a.onFailure?.holdTimeout ?? ''" (input)="setFailurePolicyField('holdTimeout', value($event))" />
+              <small class="muted">ISO-8601 duration, counted from the last failure. Empty: the flow waits until someone acts.</small>
+            </label>
+            @if (a.onFailure?.holdTimeout) {
+              <label class="field"><span>On timeout</span>
+                <select [attr.data-field-sev]="fieldSev('onFailure.onTimeout')" [attr.aria-invalid]="fieldSev('onFailure.onTimeout') === 'error' || null" (change)="setFailurePolicyField('onTimeout', value($event))">
+                  <option value="" [selected]="!a.onFailure?.onTimeout">(fail)</option>
+                  @for (t of timeoutActions; track t) { <option [value]="t" [selected]="a.onFailure?.onTimeout === t">{{ t }}</option> }
+                </select>
+                <small class="muted">fail: the flow ends FAILED · cancel: runs the cancellation workflow (falls back to fail).</small>
+              </label>
+            }
+          }
+          <label class="check">
+            <input type="checkbox" [checked]="!!a.cancellationActivity" (change)="toggleCancellation(checked($event))" />
+            Cancellation activity
+          </label>
+          @if (a.cancellationActivity; as ca) {
+            <label class="field"><span>Cancellation workflow *</span>
+              <app-workflow-select [attr.data-field-sev]="fieldSev('cancellationActivity.label')" [value]="ca.label ?? ''" (valueChange)="patchActivity(['cancellationActivity', 'label'], $event)" />
+            </label>
+            <label class="check">
+              <input [attr.data-field-sev]="fieldSev('cancellationActivity.active')" [attr.aria-invalid]="fieldSev('cancellationActivity.active') === 'error' || null" type="checkbox" [checked]="ca.active === true" (change)="patchActivity(['cancellationActivity', 'active'], checked($event))" />
+              Active
+            </label>
+            <label class="check">
+              <input [attr.data-field-sev]="fieldSev('cancellationActivity.automaticOnFailure')" [attr.aria-invalid]="fieldSev('cancellationActivity.automaticOnFailure') === 'error' || null" type="checkbox" [checked]="ca.automaticOnFailure === true"
+                     (change)="patchActivity(['cancellationActivity', 'automaticOnFailure'], checked($event) || undefined)" />
+              Run automatically on failure
+            </label>
+            <app-json-field [attr.data-field-sev]="fieldSev('cancellationActivity.staticVariables')" label="Cancellation static variables" [rows]="3" [value]="ca.staticVariables"
+                            (valueChange)="patchActivity(['cancellationActivity', 'staticVariables'], $event)" />
+          }
+        </fieldset>
+      } @else if (step(); as s) {
+        <h3>Step</h3>
+        <ul class="node-issues">@for (m of issuesAt(selectedPath()); track $index) { <li>{{ m }}</li> }</ul>
+        <label class="field"><span>Label *</span>
+          <input [attr.data-field-sev]="fieldSev('label')" [attr.aria-invalid]="fieldSev('label') === 'error' || null" [value]="s.label ?? ''" (change)="renameStep(value($event))" />
+          <small class="muted">Renaming updates the previousStep links of the other steps.</small>
+        </label>
+        <div class="grid2">
+          <label class="field"><span>Type</span>
+            <select [attr.data-field-sev]="fieldSev('type')" [attr.aria-invalid]="fieldSev('type') === 'error' || null" (change)="patchStep('type', value($event))">
+              <option value="" [selected]="!s.type">(default: manual)</option>
+              @for (t of stepTypes; track t) { <option [value]="t" [selected]="s.type === t">{{ t }}</option> }
+              @if (s.type && !stepTypes.includes($any(s.type))) { <option [value]="s.type" selected>{{ s.type }} (unknown)</option> }
+            </select>
+            <small class="muted">automatic: starts as soon as the previous step completes.</small>
+          </label>
+          <label class="field"><span>Sync</span>
+            <select [attr.data-field-sev]="fieldSev('sync')" [attr.aria-invalid]="fieldSev('sync') === 'error' || null" (change)="patchStep('sync', triState($event))">
+              <option value="" [selected]="boolText(s.sync) === ''">(unset)</option>
+              <option value="true" [selected]="s.sync === true">true</option>
+              <option value="false" [selected]="s.sync === false">false</option>
+            </select>
+          </label>
+        </div>
+        <fieldset [attr.data-field-sev]="fieldSev('previousStep')">
+          <legend>Runs after</legend>
+          @for (other of steps(); track $index) {
+            @if (other.label && other !== s) {
+              <label class="check">
+                <input type="checkbox" [checked]="s.previousStep?.includes(other.label)" (change)="togglePreviousStep(other.label, checked($event))" />
+                {{ other.label }}
+              </label>
+            }
+          }
+          @if (!s.previousStep) {
+            <small class="muted">None: this is an entry step (the flow starts at the first one).</small>
+          }
+        </fieldset>
+        <button (click)="addActivity(selection().step!)">+ Add activity</button>
+      } @else {
+        <h3>Flow</h3>
+        <ul class="node-issues">@for (m of issuesAt(''); track $index) { <li>{{ m }}</li> }</ul>
+        <label class="field"><span>Label *</span>
+          <input [attr.data-field-sev]="fieldSev('label')" [attr.aria-invalid]="fieldSev('label') === 'error' || null" [value]="config().label ?? ''" (input)="patch(['label'], value($event))" />
+          <small class="muted">The name the flow is started with and the configuration is stored under.</small>
+        </label>
+        <app-json-field [attr.data-field-sev]="fieldSev('staticVariables')" label="Static variables" [rows]="6" [value]="config().staticVariables"
+                        hint="Passed to every step as flowStaticVariables." (valueChange)="patch(['staticVariables'], $event)" />
+        <p class="muted small">{{ steps().length }} step(s). Select a step or activity in the outline or the diagram to edit it.</p>
+      }
+    </aside>
+  </div>
+
+  <app-issues-panel class="issues-panel" [issues]="issues()" [note]="catalogNote()" (select)="select($event)" />
+</div>
+
+
+@if (publishing()) {
+  <app-publish-dialog kind="orchestrator" [name]="config().label ?? ''" [body]="config()" [errorCount]="errorCount()"
+                      (closed)="publishing.set(false)" (published)="onPublished($event)" />
+}
+@if (running()) {
+  <app-run-dialog [name]="config().label ?? ''" [draft]="config()" (closed)="running.set(false)" />
+}
+@if (showShortcuts()) {
+  <app-shortcuts-dialog [groups]="shortcuts" (closed)="showShortcuts.set(false)" />
+}
+@if (draftsMenu(); as pos) {
+  <div class="drafts-menu" role="menu" aria-label="Drafts" [style.top.px]="pos.top" [style.right.px]="pos.right"
+       (keydown.escape)="draftsMenu.set(null)">
+    <div class="drafts-head">
+      <span class="muted small">Kept when you open another document. The newest {{ maxDrafts }} are kept.</span>
+      <button class="ghost small-btn" role="menuitem" (click)="keepCopy()">Keep a copy of this one</button>
+    </div>
+    @for (d of savedDrafts(); track d.id) {
+      <div class="draft-row">
+        <button class="draft-open" role="menuitem" (click)="openDraft(d)" [title]="'Open ' + (d.name || '(no label)') + '; the open document takes its place here'">
+          <strong>{{ d.name || '(no label)' }}</strong>
+          <span class="muted small">{{ draftSteps(d) }} step{{ draftSteps(d) === 1 ? '' : 's' }} · {{ d.savedAt | date: 'MMM d, HH:mm' }}</span>
+        </button>
+        <button class="icon danger" title="Remove this draft" [attr.aria-label]="'Remove draft ' + (d.name || '(no label)')" (click)="forget(d, $event)">✕</button>
+      </div>
+    } @empty {
+      <p class="muted small draft-empty">No drafts yet. Opening another document keeps the current one here.</p>
+    }
+  </div>
+}

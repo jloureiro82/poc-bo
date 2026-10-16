@@ -1,0 +1,2 @@
+# deploy-time secrets (the services' JWTs)
+.env

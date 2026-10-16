@@ -1,0 +1,7 @@
+# Files that run or are read inside Linux containers keep LF line endings on every OS
+# (a CRLF in 15-app-config.sh stops the container at startup).
+*.sh            text eol=lf
+*.template      text eol=lf
+Dockerfile      text eol=lf
+*.yml           text eol=lf
+.env.example    text eol=lf

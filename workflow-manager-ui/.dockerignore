@@ -1,0 +1,15 @@
+node_modules
+dist
+.angular
+.vscode
+.idea
+coverage
+tmp
+out-tsc
+__screenshots__
+*.log
+Dockerfile
+.dockerignore
+# dev-only JWT: must never reach an image
+src/environments/environment.development.ts
+.env

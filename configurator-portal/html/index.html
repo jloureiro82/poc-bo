@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Configurators</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f6f8;
+      --surface: #ffffff;
+      --border: #dde1e7;
+      --text: #1d2330;
+      --muted: #667085;
+      --accent: #2f5bd3;
+      --auto: #0f7b6c;
+      --ok: #1d7a3e;
+      --ok-soft: #e5f5ea;
+      --error: #c62f2f;
+      --error-soft: #fdecec;
+      --shadow: 0 1px 2px rgba(22, 32, 58, 0.06), 0 1px 3px rgba(22, 32, 58, 0.07);
+      --shadow-lg: 0 2px 6px rgba(22, 32, 58, 0.08), 0 16px 40px -8px rgba(22, 32, 58, 0.22);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #11141a;
+        --surface: #181c24;
+        --border: #2e3442;
+        --text: #e4e7ee;
+        --muted: #949cad;
+        --accent: #7c9dff;
+        --auto: #4cc7b4;
+        --ok: #6fd294;
+        --ok-soft: #173023;
+        --error: #ff7b7b;
+        --error-soft: #3a1d20;
+        --shadow: 0 1px 3px rgba(3, 6, 14, 0.5);
+        --shadow-lg: 0 2px 6px rgba(3, 6, 14, 0.4), 0 18px 44px -8px rgba(3, 6, 14, 0.7);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    main { max-width: 860px; margin: 0 auto; padding: 72px 16px 48px; }
+    h1 { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-size: 26px; letter-spacing: -0.02em; }
+    .lead { margin: 0 0 32px; color: var(--muted); }
+    .mark { position: relative; width: 22px; height: 22px; flex-shrink: 0; }
+    .mark::before, .mark::after { content: ''; position: absolute; width: 11px; height: 11px; border-radius: 3px; }
+    .mark::before { left: 0; top: 0; background: var(--accent); }
+    .mark::after { right: 0; bottom: 0; background: var(--auto); }
+    .apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }
+    .app {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: 100%;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      color: inherit;
+      text-decoration: none;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .app:hover { box-shadow: var(--shadow-lg); border-color: var(--accent); }
+    .app:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 2px; }
+    .app h2 { margin: 0; font-size: 17px; }
+    .app p { margin: 0; color: var(--muted); font-size: 14px; flex: 1; }
+    .app code { font-size: 12.5px; }
+    .status { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); }
+    .status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+    .status.ok { color: var(--ok); }
+    .status.ok::before { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
+    .status.down { color: var(--error); }
+    .status.down::before { background: var(--error); box-shadow: 0 0 0 3px var(--error-soft); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1><span class="mark" aria-hidden="true"></span>Configurators</h1>
+    <p class="lead">Design, validate, publish and monitor the configurations of the platform's services.</p>
+    <ul class="apps">
+      <li>
+        <a class="app" href="workflows/">
+          <h2>Workflow Configurator</h2>
+          <p>Workflows of the <code>workflow-manager</code> service: edit, publish, run and follow their executions.</p>
+          <span class="status" data-health="workflows/management/health">Checking the service…</span>
+        </a>
+      </li>
+      <li>
+        <a class="app" href="flows/">
+          <h2>Flow Configurator</h2>
+          <p>Orchestrators and workflows of the <code>process-orchestrator</code> service: edit, publish, start flows and follow them.</p>
+          <span class="status" data-health="flows/management/health">Checking the service…</span>
+        </a>
+      </li>
+    </ul>
+  </main>
+  <script>
+    // Each app's nginx proxies /management to its service, so this checks the whole path: portal, app and service.
+    for (const el of document.querySelectorAll('[data-health]')) {
+      fetch(el.dataset.health, { cache: 'no-store' })
+        .then(res => {
+          el.classList.add(res.ok ? 'ok' : 'down');
+          el.textContent = res.ok ? 'Service reachable' : 'Service answered ' + res.status;
+        })
+        .catch(() => {
+          el.classList.add('down');
+          el.textContent = 'Service unreachable';
+        });
+    }
+  </script>
+</body>
+</html>

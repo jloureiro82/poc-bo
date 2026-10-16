@@ -1,0 +1,394 @@
+<div class="editor">
+  <header class="toolbar">
+    <h1>Workflow <span class="muted">{{ config().name || '(no name)' }}</span></h1>
+    <div class="toolbar-actions">
+      <span class="button-group" role="group" aria-label="History">
+        <button class="ghost icon-text" (click)="undo()" [disabled]="!canUndo()" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+        <button class="ghost icon-text" (click)="redo()" [disabled]="!canRedo()" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+      </span>
+      <button class="ghost" (click)="reset('blank')">New</button>
+      <button class="ghost" (click)="reset('sample')">Sample</button>
+      <button class="ghost drafts-toggle" (click)="toggleDrafts($event)" [attr.aria-expanded]="!!draftsMenu()" aria-haspopup="menu"
+              title="Earlier documents, kept when you open another one">
+        Drafts{{ savedDrafts().length ? ' (' + savedDrafts().length + ')' : '' }} ▾
+      </button>
+      <label class="button ghost">Import<input type="file" accept=".json,application/json" hidden (change)="importFile($event)" /></label>
+      <button class="ghost" (click)="exportFile()">Export</button>
+      <button class="ghost" (click)="copyJson()">Copy JSON</button>
+      <button class="ghost icon-text" (click)="showShortcuts.set(true)" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</button>
+      <button class="ghost" (click)="running.set(true)" [disabled]="!config().name"
+              [title]="config().name ? 'Start a run of the version the service runs, with an input you type' : 'Name the workflow first'">
+        ▶ Run…
+      </button>
+      <button class="primary" (click)="publishing.set(true)" [disabled]="errorCount() > 0"
+              [title]="errorCount() ? 'Fix the errors first' : 'Create a new version in the service'">
+        Publish
+      </button>
+    </div>
+  </header>
+  @if (toast()) {
+    <div class="toast">{{ toast() }}</div>
+  }
+
+  <div class="editor-body" [style.--left-w]="panels.left() + 'px'" [style.--right-w]="panels.right() + 'px'">
+    <!-- Outline ------------------------------------------------------------------------------------------------->
+    <aside class="outline" (dragend)="endDrag()">
+      <div class="outline-find">
+        <input #searchBox type="search" class="search" placeholder="Find a task  ( / )" aria-label="Find a task by label, type or component"
+               [value]="query()" (input)="query.set(value($event))" (keydown)="onSearchKey($event)" />
+        @if (query().trim()) {
+          <span class="find-count muted small" aria-live="polite">
+            {{ matchRows().length ? (matchIndex() + 1 || '–') + ' of ' + matchRows().length : 'no match' }}
+          </span>
+          <button class="icon" title="Previous match (Shift+Enter)" aria-label="Previous match" [disabled]="!matchRows().length" (click)="nextMatch(-1)">↑</button>
+          <button class="icon" title="Next match (Enter)" aria-label="Next match" [disabled]="!matchRows().length" (click)="nextMatch(1)">↓</button>
+        }
+      </div>
+      <div class="outline-row root" [class.selected]="selectedPath() === ''" [attr.data-sev]="sev('')"
+           [class.drop-into]="dropKey() === 'root'" keyActivate [attr.aria-current]="selectedPath() === '' || null"
+           (click)="select('')" (dragover)="dragOver($event, 'root', ['tasks'], 1e9)" (drop)="drop($event, ['tasks'], 1e9)">
+        <span class="kind">workflow</span><span class="row-title">{{ config().name || '(no name)' }}</span>
+      </div>
+      @for (row of outline(); track row.key) {
+        @if (row.kind === 'task') {
+          <div class="outline-row" [style.padding-left.px]="8 + row.depth * 12" [class.selected]="selectedPath() === row.key"
+               [attr.data-key]="row.key" [class.match]="matchKeys()?.has(row.key)" [class.dim]="matchKeys() && !matchKeys()!.has(row.key)"
+               [class.dragging]="dragKey() === row.key" [class.drop-before]="dropKey() === row.key"
+               [attr.data-sev]="sev(row.key)" [title]="row.title + ' (' + row.type + ') — drag to move'"
+               keyActivate [attr.aria-current]="selectedPath() === row.key || null"
+               draggable="true" (dragstart)="startDrag($event, row)"
+               (dragover)="dragOver($event, row.key, row.path.slice(0, -1), $any(row.path[row.path.length - 1]))"
+               (drop)="drop($event, row.path.slice(0, -1), $any(row.path[row.path.length - 1]))"
+               (click)="select(row.key)">
+            <span class="grip" aria-hidden="true">⋮⋮</span>
+            <span class="kind">{{ row.type }}</span><span class="row-title">{{ row.title }}</span>
+            <span class="row-actions">
+              <button class="icon" title="Move up" aria-label="Move up" [disabled]="row.first" (click)="moveTask(row.path, -1); $event.stopPropagation()">↑</button>
+              <button class="icon" title="Move down" aria-label="Move down" [disabled]="row.last" (click)="moveTask(row.path, 1); $event.stopPropagation()">↓</button>
+              <button class="icon danger" title="Delete task" aria-label="Delete task" (click)="removeTask(row.path); $event.stopPropagation()">✕</button>
+            </span>
+          </div>
+        } @else {
+          <div class="outline-list" [style.padding-left.px]="8 + row.depth * 12" [class.drop-into]="dropKey() === row.key"
+               (dragover)="dragOver($event, row.key, row.path, 1e9)" (drop)="drop($event, row.path, 1e9)">
+            <span class="row-title">{{ row.title }}</span>
+            <app-task-template-menu label="+" title="Add a task here" buttonClass="icon" (pick)="addTask(row.path, $event)" />
+          </div>
+        }
+      }
+      <div class="outline-add">
+        <app-task-template-menu (pick)="addTask(['tasks'], $event)" />
+        <button class="ghost small-btn" (click)="pasteFromButton()" title="Paste copied tasks after the selected task (Ctrl+V)">Paste</button>
+      </div>
+      <p class="muted small outline-hint">
+        Drag tasks to move them, also into or out of cases, loops and branches. Press <kbd>?</kbd> for keyboard shortcuts.
+      </p>
+    </aside>
+
+    <!-- Canvas -------------------------------------------------------------------------------------------------->
+    <main class="canvas">
+      <app-resize-handle side="left" />
+      <app-resize-handle side="right" />
+      <div class="tabs">
+        <button [class.active]="tab() === 'visual'" (click)="tab.set('visual')">Diagram</button>
+        <button [class.active]="tab() === 'json'" (click)="tab.set('json')">JSON</button>
+        @if (tab() === 'visual') {
+          <span class="tabs-extra">
+            <span class="muted small">Save picture</span>
+            <button class="ghost small-btn" (click)="exportPicture('svg')" title="Save the diagram as an SVG picture">SVG</button>
+            <button class="ghost small-btn" (click)="exportPicture('png')" title="Save the diagram as a PNG picture">PNG</button>
+          </span>
+        }
+      </div>
+      @if (tab() === 'visual') {
+        <app-diagram-viewport>
+          <div class="workflow-diagram" #diagram>
+            <div class="terminal start">start</div>
+            <app-task-flow [items]="rootItems()" [severity]="severity()" [selected]="selectedPath()" [editable]="true" [matches]="matchKeys()"
+                           (select)="select($event)" (insert)="insertTask($event)" (remove)="removeTask($event)" (move)="moveOnDiagram($event)" />
+            @if (!rootItems().length) {
+              <app-task-template-menu label="+ Add the first task" buttonClass="primary" (pick)="addTask(['tasks'], $event)" />
+            }
+            <div class="connector"></div>
+            <div class="terminal end">end → outputParameters</div>
+          </div>
+        </app-diagram-viewport>
+      } @else {
+        <app-json-document [value]="config()" (valueChange)="onJsonEdited($event)" />
+      }
+    </main>
+
+    <!-- Inspector ----------------------------------------------------------------------------------------------->
+    <aside class="inspector">
+      @if (task(); as t) {
+        <div class="inspector-head">
+          <h3>Task</h3>
+          <span class="inspector-actions">
+            <button class="ghost small-btn" (click)="duplicateTask()" title="Duplicate this task (Ctrl+D)">Duplicate</button>
+            <button class="ghost small-btn" (click)="copyTask()" title="Copy this task as JSON, to paste here or in another workflow (Ctrl+C)">Copy</button>
+          </span>
+        </div>
+        <ul class="node-issues">@for (m of issuesAt(selectedPath()); track $index) { <li>{{ m }}</li> }</ul>
+        <label class="field"><span>Label *</span>
+          <input [attr.data-field-sev]="fieldSev('label')" [attr.aria-invalid]="fieldSev('label') === 'error' || null" [value]="t.label ?? ''" (input)="patchTask('label', value($event))" />
+        </label>
+        <label class="field"><span>Type *</span>
+          <select [attr.data-field-sev]="fieldSev('type')" [attr.aria-invalid]="fieldSev('type') === 'error' || null" (change)="changeType(value($event))">
+            @if (!t.type) { <option value="" selected disabled>(choose a type)</option> }
+            @for (type of taskTypes; track type) { <option [value]="type" [selected]="t.type === type">{{ type }}</option> }
+            @if (t.type && !isKnownType(t.type)) { <option [value]="t.type" selected>{{ t.type }}</option> }
+          </select>
+        </label>
+        <label class="field"><span>Description</span>
+          <textarea [attr.data-field-sev]="fieldSev('description')" [attr.aria-invalid]="fieldSev('description') === 'error' || null" autoGrow singleLine class="prose" rows="1" [value]="t.description ?? ''" (input)="patchTask('description', value($event))"></textarea>
+        </label>
+
+        @if (isWorker(t.type)) {
+          <label class="field"><span>Component *</span>
+            <select [attr.data-field-sev]="fieldSev('component')" [attr.aria-invalid]="fieldSev('component') === 'error' || null" (change)="changeComponent(value($event))">
+              <option value="" [selected]="!t.component">(choose a component)</option>
+              @for (c of components; track c) { <option [value]="c" [selected]="t.component === c">{{ c }}</option> }
+              @if (t.component && !components.includes($any(t.component))) { <option [value]="t.component" selected>{{ t.component }}</option> }
+            </select>
+            <small class="muted">The TaskHandler bean that runs this task.</small>
+          </label>
+        }
+        @if (t.type === 'logical' || t.type === 'loop' || t.type === 'decision' || t.component === 'logical' || t.expression !== undefined) {
+          <label class="field"><span>Expression{{ t.type === 'decision' ? ' * (its value selects the case)' : t.type === 'loop' ? ' * (the body runs again until it is true)' : '' }}</span>
+            <textarea [attr.data-field-sev]="fieldSev('expression')" [attr.aria-invalid]="fieldSev('expression') === 'error' || null" autoGrow rows="2" spellcheck="false" [value]="t.expression ?? ''" (input)="patchTask('expression', value($event))"></textarea>
+          </label>
+        }
+
+        @if (t.component === 'http') {
+          <fieldset>
+            <legend>HTTP request (inputParameters)</legend>
+            <div class="seg">
+              <button type="button" [class.active]="!usesRoute(t)" (click)="setHttpMode('url')">URL</button>
+              <button type="button" [class.active]="usesRoute(t)" (click)="setHttpMode('route')">Configured route</button>
+            </div>
+            @if (usesRoute(t)) {
+              <label class="field"><span>Route name *</span>
+                <input [attr.data-field-sev]="fieldSev('inputParameters.endpoint')" [attr.aria-invalid]="fieldSev('inputParameters.endpoint') === 'error' || null" [value]="$any(httpInput(t)['endpoint']) ?? ''" (input)="patchHttp('endpoint', value($event))" />
+                <small class="muted">A route under workflowengine.endpoints.routes in the service config; it supplies url, method and headers.</small>
+              </label>
+            } @else {
+              <div class="grid-method">
+                <label class="field"><span>Method</span>
+                  <select [attr.data-field-sev]="fieldSev('inputParameters.httpMethod')" [attr.aria-invalid]="fieldSev('inputParameters.httpMethod') === 'error' || null" (change)="patchHttp('httpMethod', value($event))">
+                    @for (m of httpMethods; track m) {
+                      <option [value]="m" [selected]="(httpInput(t)['httpMethod'] ?? 'POST') === m">{{ m }}</option>
+                    }
+                  </select>
+                </label>
+                <label class="field"><span>URL *</span>
+                  <textarea [attr.data-field-sev]="fieldSev('inputParameters.url')" [attr.aria-invalid]="fieldSev('inputParameters.url') === 'error' || null" autoGrow singleLine rows="1" spellcheck="false" [value]="$any(httpInput(t)['url']) ?? ''" placeholder="https://…" (input)="patchHttp('url', value($event))"></textarea>
+                </label>
+              </div>
+              <app-json-field [attr.data-field-sev]="fieldSev('inputParameters.headers')" label="Headers" [rows]="3" [value]="httpInput(t)['headers']"
+                              hint="Required; use {} for none. Empty headers default to Content-Type: application/json." (valueChange)="patchHttp('headers', $event)" />
+            }
+            <app-json-field [attr.data-field-sev]="fieldSev('inputParameters.body')" label="Body" [rows]="5" [objectOnly]="false" [value]="httpInput(t)['body']"
+                            hint="Values can be expressions." (valueChange)="patchHttp('body', $event)" />
+            <label class="field"><span>Success condition</span>
+              <textarea [attr.data-field-sev]="fieldSev('successCondition')" [attr.aria-invalid]="fieldSev('successCondition') === 'error' || null" autoGrow singleLine rows="1" spellcheck="false" [value]="$any(t['successCondition']) ?? ''" (input)="patchTask('successCondition', value($event))"></textarea>
+              <small class="muted">Evaluated against the response; false makes the task fail.</small>
+            </label>
+            <label class="check">
+              <input [attr.data-field-sev]="fieldSev('rawRequest')" [attr.aria-invalid]="fieldSev('rawRequest') === 'error' || null" type="checkbox" [checked]="t['rawRequest'] === true" (change)="patchTask('rawRequest', checked($event) || undefined)" />
+              Raw request (send the body as is)
+            </label>
+          </fieldset>
+        }
+
+        @if (t.component === 'notification') {
+          <fieldset>
+            <legend>Notification</legend>
+            <div class="grid2">
+              <label class="field"><span>Type *</span>
+                <select [attr.data-field-sev]="fieldSev('notificationType')" [attr.aria-invalid]="fieldSev('notificationType') === 'error' || null" (change)="patchTask('notificationType', value($event))">
+                  <option value="" [selected]="!t['notificationType']">(choose)</option>
+                  @for (n of notificationTypes; track n) { <option [value]="n" [selected]="t['notificationType'] === n">{{ n }}</option> }
+                </select>
+              </label>
+              <label class="field"><span>Template id *</span>
+                <input [attr.data-field-sev]="fieldSev('template')" [attr.aria-invalid]="fieldSev('template') === 'error' || null" [value]="$any(t['template']) ?? ''" (input)="patchTask('template', value($event))" />
+              </label>
+              <label class="field"><span>System name</span>
+                <input [attr.data-field-sev]="fieldSev('systemName')" [attr.aria-invalid]="fieldSev('systemName') === 'error' || null" [value]="$any(t['systemName']) ?? ''" (input)="patchTask('systemName', value($event))" />
+              </label>
+              <label class="field"><span>Client name</span>
+                <input [attr.data-field-sev]="fieldSev('clientName')" [attr.aria-invalid]="fieldSev('clientName') === 'error' || null" [value]="$any(t['clientName']) ?? ''" (input)="patchTask('clientName', value($event))" />
+              </label>
+              <label class="field"><span>Client id</span>
+                <input [attr.data-field-sev]="fieldSev('clientId')" [attr.aria-invalid]="fieldSev('clientId') === 'error' || null" [value]="$any(t['clientId']) ?? ''" (input)="patchTask('clientId', value($event))" />
+              </label>
+            </div>
+            @if (t['notificationType'] === 'email') {
+              <label class="field"><span>From</span>
+                <input [attr.data-field-sev]="fieldSev('emailFrom')" [attr.aria-invalid]="fieldSev('emailFrom') === 'error' || null" [value]="$any(t['emailFrom']) ?? ''" (input)="patchTask('emailFrom', value($event))" />
+              </label>
+              <label class="field"><span>To * (one address or expression per line)</span>
+                <textarea [attr.data-field-sev]="fieldSev('emailTo')" [attr.aria-invalid]="fieldSev('emailTo') === 'error' || null" autoGrow rows="2" spellcheck="false" [value]="listText(t['emailTo'])" (change)="patchTask('emailTo', toList(value($event)))"></textarea>
+              </label>
+              <label class="field"><span>Subject</span>
+                <input [attr.data-field-sev]="fieldSev('subject')" [attr.aria-invalid]="fieldSev('subject') === 'error' || null" [value]="$any(t['subject']) ?? ''" (input)="patchTask('subject', value($event))" />
+              </label>
+            }
+            @if (t['notificationType'] === 'sms') {
+              <div class="grid2">
+                <label class="field"><span>Phone number *</span>
+                  <input [attr.data-field-sev]="fieldSev('phoneNumber')" [attr.aria-invalid]="fieldSev('phoneNumber') === 'error' || null" [value]="$any(t['phoneNumber']) ?? ''" (input)="patchTask('phoneNumber', value($event))" />
+                </label>
+                <label class="field"><span>Gateway</span>
+                  <input [attr.data-field-sev]="fieldSev('gateway')" [attr.aria-invalid]="fieldSev('gateway') === 'error' || null" [value]="$any(t['gateway']) ?? ''" (input)="patchTask('gateway', value($event))" />
+                </label>
+              </div>
+            }
+            <app-json-field [attr.data-field-sev]="fieldSev('content')" label="Content (field id → value)" [rows]="3" [value]="t['content']" (valueChange)="patchTask('content', $event)" />
+          </fieldset>
+        }
+
+        @if (t.component === 'mapResolver') {
+          <fieldset>
+            <legend>Map resolver</legend>
+            <app-json-field [attr.data-field-sev]="fieldSev('keys')" label="Keys *" [rows]="4" [value]="t['keys']"
+                            hint="One per map level, applied in the order of the number in the name: key1, key2, …"
+                            (valueChange)="patchTask('keys', $event)" />
+            <div class="seg">
+              <button type="button" [class.active]="!mapIsExpression(t)" (click)="setMapMode('inline')">Inline map</button>
+              <button type="button" [class.active]="mapIsExpression(t)" (click)="setMapMode('expression')">Expression</button>
+            </div>
+            @if (mapIsExpression(t)) {
+              <label class="field"><span>Map expression *</span>
+                <textarea [attr.data-field-sev]="fieldSev('map')" [attr.aria-invalid]="fieldSev('map') === 'error' || null" autoGrow singleLine rows="2" spellcheck="false" [value]="$any(t['map'])" (input)="patchTask('map', value($event))"></textarea>
+                <small class="muted">A SpEL expression that yields the nested map at run time; its shape is checked only then.</small>
+              </label>
+            } @else {
+              <app-json-field [attr.data-field-sev]="fieldSev('map')" label="Map *" [rows]="8" [value]="t['map']"
+                              hint="Nested by key level; final values must be strings. DEFAULT is used when a key has no match."
+                              (valueChange)="patchTask('map', $event)" />
+            }
+          </fieldset>
+        }
+
+        @if (t.type === 'for') {
+          <label class="field"><span>List * (expression to iterate over)</span>
+            <textarea [attr.data-field-sev]="fieldSev('list')" [attr.aria-invalid]="fieldSev('list') === 'error' || null" autoGrow singleLine rows="1" spellcheck="false" [value]="$any(t.list) ?? ''" (input)="patchTask('list', value($event))"></textarea>
+            <small class="muted">The loop body runs once per element; each run receives the element as listMember.</small>
+          </label>
+          <label class="field"><span>Condition (optional)</span>
+            <textarea [attr.data-field-sev]="fieldSev('condition')" [attr.aria-invalid]="fieldSev('condition') === 'error' || null" autoGrow singleLine rows="1" spellcheck="false" [value]="$any(t['condition']) ?? ''" (input)="patchTask('condition', value($event))"></textarea>
+          </label>
+        }
+        @if (t.type === 'decision') {
+          <fieldset [attr.data-field-sev]="fieldSev('cases')">
+            <legend>Cases</legend>
+            @for (cs of t.cases ?? []; track $index; let ci = $index) {
+              <div class="case-row">
+                <input [attr.data-field-sev]="fieldSev('cases[' + ci + '].key')" [attr.aria-invalid]="fieldSev('cases[' + ci + '].key') === 'error' || null" [value]="caseKeyInput(cs.key)" placeholder="key" (change)="setCaseKey(ci, value($event))" />
+                <small class="muted">{{ cs.tasks?.length ?? 0 }} task(s)</small>
+                <app-task-template-menu label="+" title="Add a task to this case" buttonClass="icon"
+                                        (pick)="addTask([...selectedPathParts(), 'cases', ci, 'tasks'], $event)" />
+                <button class="icon danger" title="Remove case" aria-label="Remove case" (click)="removeCase(ci)">✕</button>
+              </div>
+            }
+            <button (click)="addCase()">+ case</button>
+            <label class="check">
+              <input [attr.data-field-sev]="fieldSev('default')" [attr.aria-invalid]="fieldSev('default') === 'error' || null" type="checkbox" [checked]="!!t.default" (change)="toggleDefault(checked($event))" /> Default branch
+            </label>
+            <small class="muted">Numbers and true/false are stored typed; anything else as text. Keep the default branch empty: the engine fails when it holds tasks.</small>
+          </fieldset>
+        }
+        @if (t.type === 'for' || t.type === 'loop') {
+          <app-task-template-menu label="+ Add loop task" buttonClass=""
+                                  (pick)="addTask([...selectedPathParts(), 'tasks'], $event)" />
+        }
+        @if (!isLogicalTask(t)) {
+          <div class="grid2">
+            <label class="field"><span>Retry</span>
+              <input [attr.data-field-sev]="fieldSev('retry')" [attr.aria-invalid]="fieldSev('retry') === 'error' || null" type="number" min="0" [value]="t.retry ?? ''" (input)="patchTask('retry', numberOrUndefined($event))" />
+            </label>
+            <label class="field"><span>Retry delay (ms)</span>
+              <input [attr.data-field-sev]="fieldSev('retryDelay')" [attr.aria-invalid]="fieldSev('retryDelay') === 'error' || null" inputmode="numeric" [value]="$any(t['retryDelay']) ?? ''" (input)="patchTask('retryDelay', value($event))" />
+            </label>
+          </div>
+        }
+        <app-json-field [attr.data-field-sev]="fieldSev('failureOutputParameters')" label="Failure output parameters" [rows]="3" [value]="t.failureOutputParameters"
+                        (valueChange)="patchTask('failureOutputParameters', $event)" />
+        <details>
+          <summary>Raw task JSON (all fields)</summary>
+          <app-json-field label="" [rows]="12" [value]="t" (valueChange)="patchTask([], $event)" />
+        </details>
+      } @else {
+        <h3>Workflow</h3>
+        <ul class="node-issues">@for (m of issuesAt(''); track $index) { <li>{{ m }}</li> }</ul>
+        <label class="field"><span>Name *</span>
+          <input [attr.data-field-sev]="fieldSev('name')" [attr.aria-invalid]="fieldSev('name') === 'error' || null" [value]="config().name ?? ''" (input)="patch(['name'], value($event))" />
+          <small class="muted">The workflow is started, versioned and referenced by this name.</small>
+        </label>
+        <label class="field"><span>Description</span>
+          <textarea [attr.data-field-sev]="fieldSev('description')" [attr.aria-invalid]="fieldSev('description') === 'error' || null" autoGrow singleLine class="prose" rows="1" [value]="config().description ?? ''" (input)="patch(['description'], value($event))"></textarea>
+          <small class="muted">Offered as the version description when you publish; the service stores that one.</small>
+        </label>
+        <div class="grid2">
+          <label class="field"><span>Messenger provider *</span>
+            <select [attr.data-field-sev]="fieldSev('messengerProvider')" [attr.aria-invalid]="fieldSev('messengerProvider') === 'error' || null" (change)="patch(['messengerProvider'], value($event))">
+              <option value="" [selected]="!config().messengerProvider">(choose)</option>
+              @for (m of messengerProviders; track m) { <option [value]="m" [selected]="config().messengerProvider === m">{{ m }}</option> }
+              @if (config().messengerProvider && !isKnownMessenger(config().messengerProvider)) { <option [value]="config().messengerProvider" selected>{{ config().messengerProvider }}</option> }
+            </select>
+          </label>
+          <label class="check">
+            <input [attr.data-field-sev]="fieldSev('suppressFailureOutputErrorList')" [attr.aria-invalid]="fieldSev('suppressFailureOutputErrorList') === 'error' || null" type="checkbox" [checked]="config().suppressFailureOutputErrorList !== false"
+                   (change)="setSuppressErrors(checked($event))" />
+            Suppress failure error list (on unless set to false)
+          </label>
+        </div>
+        <app-json-field [attr.data-field-sev]="fieldSev('outputParameters')" label="Output parameters" [value]="config().outputParameters" (valueChange)="patch(['outputParameters'], $event)" />
+        <app-json-field [attr.data-field-sev]="fieldSev('failureOutputParameters')" label="Failure output parameters" [value]="config().failureOutputParameters"
+                        (valueChange)="patch(['failureOutputParameters'], $event)" />
+        <label class="field"><span>Failure workflow</span>
+          <app-workflow-select [attr.data-field-sev]="fieldSev('failureWorkflowId')" [value]="config().failureWorkflowId ?? ''" (valueChange)="patch(['failureWorkflowId'], $event)" />
+          <small class="muted">Runs when this workflow fails.</small>
+        </label>
+        <label class="field"><span>Rejection workflow</span>
+          <app-workflow-select [attr.data-field-sev]="fieldSev('rejectionWorkflowId')" [value]="config().rejectionWorkflowId ?? ''" (valueChange)="patch(['rejectionWorkflowId'], $event)" />
+          <small class="muted">Runs when this workflow is rejected.</small>
+        </label>
+      }
+    </aside>
+  </div>
+
+  <app-issues-panel class="issues-panel" [issues]="issues()" [note]="catalogNote()" (select)="select($event)" />
+</div>
+
+@if (publishing()) {
+  <app-publish-dialog [name]="config().name ?? ''" [body]="config()" [errorCount]="errorCount()"
+                      (closed)="publishing.set(false)" (published)="onPublished($event)" />
+}
+@if (running()) {
+  <app-run-dialog [name]="config().name ?? ''" [draft]="config()" (closed)="running.set(false)" />
+}
+@if (showShortcuts()) {
+  <app-shortcuts-dialog (closed)="showShortcuts.set(false)" />
+}
+@if (draftsMenu(); as pos) {
+  <div class="drafts-menu" role="menu" aria-label="Drafts" [style.top.px]="pos.top" [style.right.px]="pos.right"
+       (keydown.escape)="draftsMenu.set(null)">
+    <div class="drafts-head">
+      <span class="muted small">Kept when you open another document. The newest {{ maxDrafts }} are kept.</span>
+      <button class="ghost small-btn" role="menuitem" (click)="keepCopy()">Keep a copy of this one</button>
+    </div>
+    @for (d of savedDrafts(); track d.id) {
+      <div class="draft-row">
+        <button class="draft-open" role="menuitem" (click)="openDraft(d)" [title]="'Open ' + (d.name || '(no name)') + '; the open document takes its place here'">
+          <strong>{{ d.name || '(no name)' }}</strong>
+          <span class="muted small">{{ draftTasks(d) }} task{{ draftTasks(d) === 1 ? '' : 's' }} · {{ d.savedAt | date: 'MMM d, HH:mm' }}</span>
+        </button>
+        <button class="icon danger" title="Remove this draft" [attr.aria-label]="'Remove draft ' + (d.name || '(no name)')" (click)="forget(d, $event)">✕</button>
+      </div>
+    } @empty {
+      <p class="muted small draft-empty">No drafts yet. Opening another document keeps the current one here.</p>
+    }
+  </div>
+}

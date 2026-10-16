@@ -1,0 +1,158 @@
+<div class="page execution">
+  <header class="toolbar">
+    <h1>
+      <a routerLink="/executions" class="back" title="Back to the list">←</a>
+      {{ run()?.name ?? 'Execution' }}
+      @if (run(); as r) {
+        <span class="pill run" [attr.data-run]="runStatusOf(r.status)">{{ statusText(r.status) }}</span>
+      }
+    </h1>
+    <div class="toolbar-actions">
+      @if (run()) {
+        <button class="ghost" (click)="rerunning.set(true)" title="Start a new run of the version the service runs, with this run's input">▶ Run again…</button>
+      }
+      @if (definition()) {
+        <button class="ghost" (click)="openDefinition()" title="Open the definition this run used in the editor">Open definition</button>
+      }
+      <button class="ghost" (click)="load()" [disabled]="loading()">{{ loading() ? 'Loading…' : '↻ Refresh' }}</button>
+    </div>
+  </header>
+
+  @if (error().length) {
+    <div class="banner error">@for (line of error(); track $index) { <div>{{ line }}</div> }</div>
+  }
+
+  @if (run(); as r) {
+    <div class="facts">
+      <div><span class="muted small">Started</span><strong>{{ (r.startTime ?? r.createTime) | date: 'yyyy-MM-dd HH:mm:ss.SSS' }}</strong></div>
+      <div><span class="muted small">Ended</span><strong>{{ r.endTime ? (r.endTime | date: 'yyyy-MM-dd HH:mm:ss.SSS') : '—' }}</strong></div>
+      <div><span class="muted small">Duration</span><strong>{{ duration(r.startTime ?? r.createTime, r.endTime) }}</strong></div>
+      <div><span class="muted small">Task executions</span><strong>{{ tasks().length }}</strong></div>
+      <div class="grow"><span class="muted small">Execution id</span><code>{{ r.workflowId }}</code></div>
+    </div>
+
+    @if (r.error.length) {
+      <div class="run-error">
+        @for (err of r.error; track $index) {
+          <div>
+            <strong>✖ {{ err.message ?? 'Error' }}</strong>
+            @if (err.taskContext?.['label']) { <span class="muted"> in task <code>{{ err.taskContext!['label'] }}</code></span> }
+            @if (err.stackTrace?.length) {
+              <details>
+                <summary>Stack trace ({{ err.stackTrace!.length }} lines)</summary>
+                <pre>{{ err.stackTrace!.join('\n') }}</pre>
+              </details>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- 1. The workflow as defined, coloured by what happened ----------------------------------------------->
+    <section class="card diagram-card">
+      <div class="card-head">
+        <h2>How it ran</h2>
+        <span class="muted small">{{ definitionNote() }} Click a task to inspect its execution.</span>
+        @if (definition()) {
+          <span class="card-head-actions">
+            <button class="ghost small-btn" (click)="exportPicture('svg')" title="Save this diagram, coloured by the run, as an SVG picture">SVG</button>
+            <button class="ghost small-btn" (click)="exportPicture('png')" title="Save this diagram, coloured by the run, as a PNG picture">PNG</button>
+          </span>
+        }
+      </div>
+      @if (definition()) {
+        <div class="workflow-diagram run-diagram" #diagram>
+          <div class="terminal start">start</div>
+          <app-task-flow [items]="rootItems()" [severity]="noIssues" [run]="overlay().nodes" (select)="selectFromDiagram($event)" />
+          <div class="connector"></div>
+          <div class="terminal end">end</div>
+        </div>
+      }
+      @if (overlay().unmatched.length) {
+        <p class="banner warning-banner small">
+          {{ overlay().unmatched.length }} task execution(s) are not in this definition:
+          @for (t of overlay().unmatched; track t.id) { <code>{{ t.label }}</code>&nbsp; }
+        </p>
+      }
+    </section>
+
+    <!-- 2. Timeline ------------------------------------------------------------------------------------------>
+    <section class="card">
+      <div class="card-head"><h2>Timeline</h2><span class="muted small">every task execution, on one time axis</span></div>
+      <div class="timeline">
+        <div class="tl-axis">
+          <div class="tl-label"></div>
+          <div class="tl-track">
+            @for (t of ticks(); track t.left) {
+              <span class="tl-tick" [style.left.%]="t.left">{{ t.label }}</span>
+            }
+          </div>
+        </div>
+        @for (t of tasks(); track t.id) {
+          <div class="tl-row" [class.selected]="t.id === selectedTaskId()" keyActivate role="button"
+               [attr.aria-pressed]="t.id === selectedTaskId()" (click)="selectedTaskId.set(t.id)">
+            <div class="tl-label" [title]="t.label + ' — ' + statusText(t.status)">
+              <strong>{{ t.label }}</strong>
+              <span class="muted small">{{ statusText(t.status) }}</span>
+            </div>
+            <div class="tl-track">
+              <div class="tl-bar" [attr.data-run]="runStatusOf(t.status)" [class.open]="!t.endTime"
+                   [style.left.%]="left(taskStart(t))" [style.width.%]="width(taskStart(t), taskEnd(t))"></div>
+              <span class="tl-dur" [class.at-end]="left(taskStart(t)) + width(taskStart(t), taskEnd(t)) > 82"
+                    [style.left.%]="left(taskStart(t)) + width(taskStart(t), taskEnd(t))">
+                {{ duration(t.startTime ?? t.createTime, t.endTime) }}{{ t.endTime ? '' : ' (running)' }}
+              </span>
+            </div>
+          </div>
+        } @empty {
+          <p class="muted">No task executions are recorded for this run (they may have been cleaned up).</p>
+        }
+      </div>
+    </section>
+
+    <!-- 3. The selected task --------------------------------------------------------------------------------->
+    @if (selectedTask(); as t) {
+      <section class="card" id="task-detail">
+        <div class="card-head">
+          <h2>{{ t.label }}</h2>
+          <span class="pill run" [attr.data-run]="runStatusOf(t.status)">{{ statusText(t.status) }}</span>
+          <span class="muted small">
+            {{ duration(t.startTime ?? t.createTime, t.endTime) }} · {{ (t.startTime ?? t.createTime) | date: 'HH:mm:ss.SSS' }}
+            @if (selectedRuns() > 1) { · executed {{ selectedRuns() }} times in this run }
+          </span>
+        </div>
+        <p class="small"><span class="muted">Task id</span> <code>{{ t.taskId }}</code></p>
+        @if (selectedTrace(); as trace) {
+          <div class="io">
+            <details open>
+              <summary>What the run kept for “{{ t.label }}”: its last execution, with evaluated fields, output and error</summary>
+              <pre>{{ trace | json }}</pre>
+            </details>
+          </div>
+        } @else {
+          <p class="muted small">The run kept no details for “{{ t.label }}”.</p>
+        }
+      </section>
+    }
+
+    <section class="card">
+      <div class="card-head"><h2>Inputs and outputs</h2></div>
+      <div class="io">
+        <details>
+          <summary>Outputs</summary>
+          <pre>{{ r.outputs | json }}</pre>
+        </details>
+        <details>
+          <summary>Inputs</summary>
+          <pre>{{ r.inputs | json }}</pre>
+        </details>
+      </div>
+    </section>
+  } @else if (loading()) {
+    <p class="muted">Loading the execution…</p>
+  }
+</div>
+
+@if (rerunning() && run(); as r) {
+  <app-run-dialog [name]="r.name" [initialInput]="rerunInput()" (closed)="rerunning.set(false)" />
+}

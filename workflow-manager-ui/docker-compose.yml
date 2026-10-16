@@ -1,0 +1,16 @@
+# UI only. The connection is set here, not in the browser:
+#   WM_BACKEND_URL  the workflow-manager service, with its /workflowmanager context path
+#                   (host.docker.internal reaches a service on the host, e.g. `./mvnw -o` on port 8081)
+#   WM_TOKEN        the JWT; put it in a .env file next to this one (WM_TOKEN=eyJ...) or export it
+services:
+  workflow-manager-ui:
+    build: .
+    image: workflow-manager-ui:latest
+    ports:
+      - "8080:80"
+    environment:
+      WM_BACKEND_URL: ${WM_BACKEND_URL:-http://host.docker.internal:8081/workflowmanager}
+      WM_TOKEN: ${WM_TOKEN:?set WM_TOKEN to the service JWT}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

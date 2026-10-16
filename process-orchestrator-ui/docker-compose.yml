@@ -1,0 +1,16 @@
+# UI only. The connection is set here, not in the browser:
+#   PO_BACKEND_URL  the process-orchestrator service, with its /process-orchestrator context path
+#                   (host.docker.internal reaches a service on the host, e.g. `./mvnw -o` on port 8081)
+#   PO_TOKEN        the JWT; put it in a .env file next to this one (PO_TOKEN=eyJ...) or export it
+services:
+  process-orchestrator-ui:
+    build: .
+    image: process-orchestrator-ui:latest
+    ports:
+      - "8090:80"
+    environment:
+      PO_BACKEND_URL: ${PO_BACKEND_URL:-http://host.docker.internal:8081/process-orchestrator}
+      PO_TOKEN: ${PO_TOKEN:?set PO_TOKEN to the service JWT}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

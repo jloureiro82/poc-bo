@@ -1,8 +1,0 @@
-<p>store-service-sample works!</p>
-<app-form-layout>
-    <app-side-view *mcSideView></app-side-view>
-    <div *mcMainView>
-        <h1>main view</h1>
-            <button *ngFor="let option of (sampleStore.mock() | async)" (click)="onClick(option.cost)">{{option.name}}</button>
-    </div>
-</app-form-layout>

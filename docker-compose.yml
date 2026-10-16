@@ -1,0 +1,46 @@
+# The configurator portal and its micro frontends, each built from its own folder:
+#   http://localhost:8080/            the portal's landing page  (configurator-portal)
+#   http://localhost:8080/workflows/  workflow-manager-ui        (workflow-manager-ui)
+#   http://localhost:8080/flows/      process-orchestrator-ui    (process-orchestrator-ui)
+# Only the portal publishes a port. Each app's container proxies its own /api to its own service and adds its own
+# token, so tokens never reach the browser. Put the settings in a .env file next to this one (see .env.example).
+name: configurators
+
+x-app-links: &app-links "Workflow Configurator=/workflows/;Flow Configurator=/flows/"
+
+services:
+  portal:
+    build: ./configurator-portal
+    image: ${IMAGE_PREFIX:-}configurator-portal:${IMAGE_TAG:-latest}
+    ports:
+      - "${PORTAL_PORT:-8080}:80"
+    depends_on:
+      workflow-manager-ui:
+        condition: service_healthy
+      process-orchestrator-ui:
+        condition: service_healthy
+    restart: unless-stopped
+
+  workflow-manager-ui:
+    build: ./workflow-manager-ui
+    image: ${IMAGE_PREFIX:-}workflow-manager-ui:${IMAGE_TAG:-latest}
+    environment:
+      WM_BACKEND_URL: ${WM_BACKEND_URL:-http://host.docker.internal:8081/workflowmanager}
+      WM_TOKEN: ${WM_TOKEN:?set WM_TOKEN to the workflow-manager JWT}
+      APP_BASE_PATH: /workflows/
+      APP_LINKS: *app-links
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  process-orchestrator-ui:
+    build: ./process-orchestrator-ui
+    image: ${IMAGE_PREFIX:-}process-orchestrator-ui:${IMAGE_TAG:-latest}
+    environment:
+      PO_BACKEND_URL: ${PO_BACKEND_URL:-http://host.docker.internal:8081/process-orchestrator}
+      PO_TOKEN: ${PO_TOKEN:?set PO_TOKEN to the process-orchestrator JWT}
+      APP_BASE_PATH: /flows/
+      APP_LINKS: *app-links
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

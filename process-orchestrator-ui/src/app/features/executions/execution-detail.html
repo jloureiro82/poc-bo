@@ -1,0 +1,180 @@
+<div class="page execution">
+  <header class="toolbar">
+    <h1>
+      <a routerLink="/executions" class="back" title="Back to the list">←</a>
+      {{ flow()?.flowName ?? 'Execution' }}
+      @if (flow(); as f) {
+        <span class="pill run" [attr.data-run]="runStatusOf(f.flowStatus)">{{ statusText(f.flowStatus) }}</span>
+      }
+    </h1>
+    <div class="toolbar-actions">
+      @if (config()) {
+        <button class="ghost" (click)="openConfig()">Open configuration</button>
+      }
+      @if (flow()) {
+        <button class="ghost" (click)="rerunning.set(true)"
+                title="Start a new flow of the active version, with the request context this one started with">▶ Run again…</button>
+      }
+      <button class="ghost" (click)="load()" [disabled]="loading()">{{ loading() ? 'Loading…' : '↻ Refresh' }}</button>
+    </div>
+  </header>
+
+  @if (error().length) {
+    <div class="banner error">@for (line of error(); track $index) { <div>{{ line }}</div> }</div>
+  }
+
+  @if (flow(); as f) {
+    <div class="facts">
+      <div><span class="muted small">Started</span><strong>{{ f.startDate | date: 'yyyy-MM-dd HH:mm:ss.SSS' }}</strong></div>
+      <div><span class="muted small">Ended</span><strong>{{ f.endDate ? (f.endDate | date: 'yyyy-MM-dd HH:mm:ss.SSS') : '—' }}</strong></div>
+      <div><span class="muted small">Duration</span><strong>{{ duration(f.startDate, f.endDate) }}</strong></div>
+      <div><span class="muted small">Activity runs</span><strong>{{ runs().length }}</strong></div>
+      <div class="grow"><span class="muted small">Execution id</span><code>{{ f.orchestratorId }}</code></div>
+    </div>
+
+    <!-- 1. The flow as configured, coloured by what happened ------------------------------------------------>
+    <section class="card diagram-card">
+      <div class="card-head">
+        <h2>How it ran</h2>
+        <span class="muted small">{{ configNote() }} Click an activity to inspect its run.</span>
+        @if (config()) {
+          <span class="card-head-actions">
+            <span class="muted small">Save picture</span>
+            <button class="ghost small-btn" (click)="exportPicture('svg')" title="Save the diagram, coloured by this run, as an SVG picture">SVG</button>
+            <button class="ghost small-btn" (click)="exportPicture('png')" title="Save the diagram, coloured by this run, as a PNG picture">PNG</button>
+          </span>
+        }
+      </div>
+      @if (exportNote()) {
+        <p class="banner error small">{{ exportNote() }}</p>
+      }
+      @if (config(); as cfg) {
+        <app-orchestrator-diagram [config]="cfg" [issues]="noIssues" [run]="overlay().nodes" (select)="selectFromDiagram($event)" />
+      }
+      @if (overlay().unmatched.length) {
+        <p class="banner warning-banner small">
+          {{ overlay().unmatched.length }} run(s) are not in this version of the configuration:
+          @for (r of overlay().unmatched; track r.id) { <code>{{ r.stepName }} / {{ r.activity }}</code>&nbsp; }
+        </p>
+      }
+    </section>
+
+    <!-- 2. Timeline ------------------------------------------------------------------------------------------>
+    <section class="card">
+      <div class="card-head"><h2>Timeline</h2><span class="muted small">steps and every activity run, on one time axis</span></div>
+      <div class="timeline">
+        <div class="tl-axis">
+          <div class="tl-label"></div>
+          <div class="tl-track">
+            @for (t of ticks(); track t.left) {
+              <span class="tl-tick" [style.left.%]="t.left">{{ t.label }}</span>
+            }
+          </div>
+        </div>
+        @for (row of rows(); track row.key) {
+          <div class="tl-row" [class.step-row]="row.kind === 'step'" [class.selected]="row.run && row.run.id === selectedRunId()"
+               [keyActivate]="!!row.run" [attr.role]="row.run ? 'button' : null"
+               [attr.aria-pressed]="row.run ? row.run.id === selectedRunId() : null"
+               (click)="row.run && selectedRunId.set(row.run.id)">
+            <div class="tl-label" [title]="row.label + ' — ' + row.sub">
+              <strong>{{ row.label }}</strong>
+              <span class="muted small">{{ row.sub }}</span>
+            </div>
+            <div class="tl-track">
+              <div class="tl-bar" [attr.data-run]="row.status" [class.open]="row.open"
+                   [style.left.%]="left(row.start)" [style.width.%]="width(row.start, row.end)"
+                   [title]="formatSpan(row)"></div>
+              <span class="tl-dur" [class.at-end]="left(row.start) + width(row.start, row.end) > 82"
+                    [style.left.%]="left(row.start) + width(row.start, row.end)">{{ formatSpan(row) }}</span>
+            </div>
+          </div>
+        } @empty {
+          <p class="muted">No steps were recorded for this execution.</p>
+        }
+      </div>
+    </section>
+
+    <!-- 3. The selected run -------------------------------------------------------------------------------->
+    @if (selectedRun(); as run) {
+      <section class="card" id="run-detail">
+        <div class="card-head">
+          <h2>{{ run.stepName }} / {{ run.activity }}</h2>
+          <span class="pill run" [attr.data-run]="runStatus(run)">{{ runStatus(run) === 'ok' ? 'succeeded' : runStatus(run) }}</span>
+          <span class="muted small">{{ run.type }} · {{ duration(run.startDate, run.endDate) }} · {{ run.startDate | date: 'HH:mm:ss.SSS' }}</span>
+        </div>
+
+        @if (selectedWorkflow(); as wf) {
+          <p class="small">
+            Workflow <strong>{{ wf.label }}</strong>
+            <span class="pill run" [attr.data-run]="runStatusOf(wf.status)">{{ statusText(wf.status) }}</span>
+            <code class="muted">{{ wf.workflowId }}</code>
+          </p>
+
+          @if (wf.error?.length) {
+            <div class="run-error">
+              @for (err of wf.error; track $index) {
+                <div>
+                  <strong>✖ {{ err.message ?? 'Error' }}</strong>
+                  @if (err.taskContext?.['label']) { <span class="muted"> in task <code>{{ err.taskContext!['label'] }}</code></span> }
+                  @if (err.stackTrace?.length) {
+                    <details>
+                      <summary>Stack trace ({{ err.stackTrace!.length }} lines)</summary>
+                      <pre>{{ err.stackTrace!.join('\n') }}</pre>
+                    </details>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <h3>Tasks</h3>
+          <div class="timeline tasks">
+            @for (t of selectedTasks(); track t.id) {
+              <div class="tl-row">
+                <div class="tl-label"><strong>{{ t.label }}</strong><span class="muted small">{{ statusText(t.status) }}</span></div>
+                <div class="tl-track">
+                  <div class="tl-bar" [attr.data-run]="runStatusOf(t.status)" [class.open]="!t.endTime"
+                       [style.left.%]="left(taskStart(t), taskSpan())" [style.width.%]="width(taskStart(t), taskEnd(t), taskSpan())"></div>
+                  <span class="tl-dur" [class.at-end]="left(taskStart(t), taskSpan()) + width(taskStart(t), taskEnd(t), taskSpan()) > 82"
+                        [style.left.%]="left(taskStart(t), taskSpan()) + width(taskStart(t), taskEnd(t), taskSpan())">
+                    {{ duration(t.startTime ?? t.createTime, t.endTime) }}
+                  </span>
+                </div>
+              </div>
+            } @empty {
+              <p class="muted small">No task executions recorded (they may have been cleaned up).</p>
+            }
+          </div>
+
+          <div class="io">
+            <details>
+              <summary>Workflow outputs</summary>
+              <pre>{{ wf.outputs | json }}</pre>
+            </details>
+            <details>
+              <summary>Workflow inputs</summary>
+              <pre>{{ wf.inputs | json }}</pre>
+            </details>
+          </div>
+        } @else {
+          <p class="muted small">No workflow execution was recorded for this run ({{ run.activityId }}).</p>
+        }
+        <div class="io">
+          <details>
+            <summary>Activity request (input)</summary>
+            <pre>{{ run.input | json }}</pre>
+          </details>
+          <details>
+            <summary>Activity response (output)</summary>
+            <pre>{{ run.output | json }}</pre>
+          </details>
+        </div>
+      </section>
+    }
+  } @else if (loading()) {
+    <p class="muted">Loading the execution…</p>
+  }
+</div>
+@if (rerunning() && flow(); as f) {
+  <app-run-dialog [name]="f.flowName" [initialInput]="startInput()" (closed)="rerunning.set(false)" />
+}

@@ -1,0 +1,14 @@
+# deploy-time secrets (the services' JWTs)
+.env
+
+# dev-only JWTs used by `npm start` (each app also ignores its own)
+**/src/environments/environment.development.ts
+
+# build output and dependencies
+node_modules/
+dist/
+.angular/
+coverage/
+
+.DS_Store
+Thumbs.db
