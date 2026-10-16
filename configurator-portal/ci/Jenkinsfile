@@ -65,12 +65,14 @@ pipeline {
       // "SonarQubeToken" credential (as in the other components' pipelines) give the URL and the token.
       // As the agent's user the scanner cannot write its cache in the image, so SONAR_USER_HOME is in /tmp;
       // its work dir is in the workspace, where the Sonar plugin reads report-task.txt.
-      // The Sonar server is reached directly at sonarUrl (plain http); the installation's https URL is not
-      // reachable from every agent.
+      // The Sonar server is reached directly at sonarUrl (plain http), on the agent's network: from a container's
+      // own network it times out (worker02, http and https).
       stage('Sonar') {
         steps {
+          // TEMPORARY: where the Sonar host resolves, on the agent and in a container; remove once Sonar passes on both agents
+          sh "getent hosts ci.dev.multicert.com || true; docker run --rm ${dockerMirror}/node:24-alpine getent hosts ci.dev.multicert.com || true"
           withSonarQubeEnv(installationName: 'SonarQube', credentialsId: 'SonarQubeToken') {
-          sh """SONAR_TOKEN="\$SONAR_AUTH_TOKEN" docker run --rm --user \$(id -u):\$(id -g) \
+          sh """SONAR_TOKEN="\$SONAR_AUTH_TOKEN" docker run --rm --network host --user \$(id -u):\$(id -g) \
              -e SONAR_HOST_URL='${sonarUrl}' -e SONAR_TOKEN -e SONAR_USER_HOME=/tmp/.sonar \
              -e SONAR_SCANNER_OPTS='-Dhttp.proxyHost=proxy.multicert.dev -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.multicert.dev -Dhttps.proxyPort=8080 -Dhttp.nonProxyHosts=localhost|*.multicert.dev|*.dev.multicert.com|*.multicert.inet' \
              -v "\$PWD/${component}":/usr/src ${dockerMirror}/sonarsource/sonar-scanner-cli \

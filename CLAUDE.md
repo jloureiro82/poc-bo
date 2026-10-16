@@ -79,8 +79,9 @@ Stages: version (`-snapshot` on `develop`), unit tests in `node:24-alpine` (apps
   images by name (`nexus:8440/node:24-alpine`), and the Dockerfiles' bases through the `BASE_REGISTRY` build arg,
   which is empty (Docker Hub) for local builds. A new `FROM` must use `${BASE_REGISTRY}` too.
 - Sonar is reached directly at `sonarUrl` (`http://ci.dev.multicert.com/sonar/`, plain http, as in the team's other
-  pipelines). The "SonarQube" installation's `https://` URL times out from the agents' containers (2026-10-16), so it
-  is not used; `withSonarQubeEnv` still gives the token.
+  pipelines) from a scanner container on the agent's network (`--network host`); `withSonarQubeEnv` gives only the
+  token. Seen on 2026-10-16: on worker02 a container's own network times out (http and https) and the host network
+  passes (https); on worker01 the host network with https times out.
 - Proxy settings reach the image builds as `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` build args, which npm reads. The
   Dockerfiles need no proxy-specific code.
 - To release a component, bump its own version: `version` in the app's `package.json` (and the two matching fields at
