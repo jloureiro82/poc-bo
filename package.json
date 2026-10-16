@@ -1,6 +1,0 @@
-{
-  "name": "config-ui",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Configurator portal and its micro frontends (workflow-manager-ui, process-orchestrator-ui). The version here is the release version of the three images built by the Jenkinsfile."
-}

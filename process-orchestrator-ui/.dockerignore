@@ -13,3 +13,5 @@ Dockerfile
 # dev-only JWT: must never reach an image
 src/environments/environment.development.ts
 .env
+ci
+sonar-project.properties

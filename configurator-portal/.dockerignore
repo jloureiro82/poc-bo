@@ -1,2 +1,5 @@
 .env
 README.md
+ci
+sonar-project.properties
+VERSION

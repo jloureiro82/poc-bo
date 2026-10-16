@@ -1,0 +1,131 @@
+// Tests, checks and publishes the workflow-manager-ui image.
+// Jenkins job: multibranch pipeline on this repository, Script Path "workflow-manager-ui/ci/Jenkinsfile".
+// Image name: ${dockerRegistry}/${dockerRepo}/${project}/${component}:<version>
+// The version comes from ${component}/package.json ("-snapshot" is added on develop).
+// process-orchestrator-ui/ci/Jenkinsfile is a copy of this file: keep them in step.
+pipeline {
+
+    agent {
+      label 'onboarding'
+    }
+
+    environment {
+        // CHANGE VARIABLES TO YOUR PROJECT
+        //-----------------------------------------
+        project = "components"
+        sonarUrl = "http://ci.dev.multicert.com/sonar/"
+        sonarProjectNameSuffix = "branch"
+        dockerRegistry = "nexus:8443"
+        dockerRepo = "multicert"
+        httpsProxy = "http://proxy.multicert.dev:8080"
+        noProxy = "localhost,multicert.inet,multicert.dev,forge.multicert.inet,ssl_ev_oa2,*.multicert.dev,*.pipelines.multicert.dev,*.dev.multicert.com"
+        httpProxy = "http://proxy.multicert.dev:8080"
+        // Jenkins job that deploys DEV; leave empty to skip the deploy stage
+        deployDevJob = ""
+        //-----------------------------------------
+        // Jenkins "Secret text" credential holding the Sonar token
+        SONAR_TOKEN = credentials('sonar-token')
+        // the folder this pipeline builds; also the image name and the Sonar project prefix
+        component = "workflow-manager-ui"
+    }
+
+    options {
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '3', numToKeepStr: '5'))
+        disableConcurrentBuilds()
+    }
+
+    stages {
+
+      stage('Init and Check Version') {
+        steps {
+          script {
+              def command="""sed 's/.*"version": "\\(.*\\)".*/\\1/;t;d' ./${component}/package.json"""
+              env.version = sh(returnStdout: true, script: command).trim();
+              env.versionSonar = env.version + "." + currentBuild.number
+
+              env.sonarProjectName = env.component + " " + env.BRANCH_NAME.replaceAll("/(.*)", "") + " " + env.sonarProjectNameSuffix
+              env.sonarProjectKey = env.component + "-" + env.BRANCH_NAME.replaceAll("/(.*)", "")
+
+              if (env.BRANCH_NAME == "develop") {
+                  env.version = env.version + "-snapshot"
+              }
+
+              env.image = "${dockerRegistry}/${dockerRepo}/${project}/${component}:${env.version}"
+              echo "Project version: ${version}"
+          }
+
+          sh "docker version"
+        }
+      }
+
+      // Unit tests (vitest + jsdom) in a throwaway Node container.
+      // Runs as the agent's user so the files it leaves in the workspace can be deleted afterwards.
+      stage('Unit Tests') {
+        steps {
+          sh """docker run --rm --user \$(id -u):\$(id -g) \
+             -e HOME=/tmp -e CI=true \
+             -e HTTP_PROXY='${httpProxy}' -e HTTPS_PROXY='${httpsProxy}' -e NO_PROXY='${noProxy}' \
+             -v "\$PWD/${component}":/app -w /app node:24-alpine \
+             sh -c 'npm ci --ignore-scripts --no-audit --no-fund && npx ng test --watch=false'"""
+        }
+      }
+
+      // Settings in ${component}/sonar-project.properties
+      stage('Sonar') {
+        steps {
+          sh """docker run --rm --user \$(id -u):\$(id -g) \
+             -e SONAR_HOST_URL='${sonarUrl}' -e SONAR_TOKEN \
+             -e SONAR_SCANNER_OPTS='-Dhttp.proxyHost=proxy.multicert.dev -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.multicert.dev -Dhttps.proxyPort=8080 -Dhttp.nonProxyHosts=localhost|*.multicert.dev|*.dev.multicert.com|*.multicert.inet' \
+             -v "\$PWD/${component}":/usr/src sonarsource/sonar-scanner-cli \
+             -Dsonar.projectKey='${env.sonarProjectKey}' \
+             -Dsonar.projectName='${env.sonarProjectName}' \
+             -Dsonar.projectVersion='${env.versionSonar}' \
+             -Dsonar.working.directory=/tmp/.scannerwork"""
+        }
+      }
+
+      stage('Build Docker') {
+        steps {
+          sh "echo version: ${version}"
+          sh "docker build --build-arg HTTP_PROXY='${httpProxy}' \
+             --build-arg HTTPS_PROXY='${httpsProxy}' \
+             --build-arg NO_PROXY='${noProxy}' \
+             ${component} -t ${image}"
+        }
+      }
+
+      stage('Publish to Docker Repo') {
+        steps {
+            withDockerRegistry([url: "http://${dockerRegistry}", credentialsId: 'nexus-credentials'])
+            {
+                sh "docker push ${image}"
+            }
+        }
+      }
+
+      stage('Deploy DEV') {
+        when {
+          allOf {
+            branch "develop"
+            expression { env.deployDevJob?.trim() }
+          }
+        }
+          steps {
+              build job: env.deployDevJob, wait: true, parameters:[string(name: 'REQUESTED_ACTION', value: env.component)]
+          }
+      }
+    }
+
+
+    post {
+        always {
+            // remove the image built here, then the workspace
+            script {
+              if (env.image) {
+                sh "docker image rm ${env.image} || true"
+              }
+            }
+            deleteDir()
+        }
+    }
+}

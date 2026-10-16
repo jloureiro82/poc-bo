@@ -1,7 +1,8 @@
-// Builds, checks and publishes the three images of this repository:
-//   configurator-portal, workflow-manager-ui, process-orchestrator-ui
-// Image names: ${dockerRegistry}/${dockerRepo}/${project}/<image>:<version>
-// The version comes from ./package.json ("-snapshot" is added on develop).
+// Tests, checks and publishes the process-orchestrator-ui image.
+// Jenkins job: multibranch pipeline on this repository, Script Path "process-orchestrator-ui/ci/Jenkinsfile".
+// Image name: ${dockerRegistry}/${dockerRepo}/${project}/${component}:<version>
+// The version comes from ${component}/package.json ("-snapshot" is added on develop).
+// A copy of workflow-manager-ui/ci/Jenkinsfile: keep them in step.
 pipeline {
 
     agent {
@@ -11,10 +12,8 @@ pipeline {
     environment {
         // CHANGE VARIABLES TO YOUR PROJECT
         //-----------------------------------------
-        project = "radix"
+        project = "components"
         sonarUrl = "http://ci.dev.multicert.com/sonar/"
-        sonarProjectKeyPrefix = "config-ui"
-        sonarProjectNamePrefix = "config-ui"
         sonarProjectNameSuffix = "branch"
         dockerRegistry = "nexus:8443"
         dockerRepo = "multicert"
@@ -26,10 +25,8 @@ pipeline {
         //-----------------------------------------
         // Jenkins "Secret text" credential holding the Sonar token
         SONAR_TOKEN = credentials('sonar-token')
-        // the images, each built from the folder of the same name
-        images = "configurator-portal workflow-manager-ui process-orchestrator-ui"
-        // the Angular apps, whose unit tests run before the images are built
-        apps = "workflow-manager-ui process-orchestrator-ui"
+        // the folder this pipeline builds; also the image name and the Sonar project prefix
+        component = "process-orchestrator-ui"
     }
 
     options {
@@ -42,17 +39,18 @@ pipeline {
       stage('Init and Check Version') {
         steps {
           script {
-              def command="""sed 's/.*"version": "\\(.*\\)".*/\\1/;t;d' ./package.json"""
+              def command="""sed 's/.*"version": "\\(.*\\)".*/\\1/;t;d' ./${component}/package.json"""
               env.version = sh(returnStdout: true, script: command).trim();
               env.versionSonar = env.version + "." + currentBuild.number
 
-              env.sonarProjectName = env.sonarProjectNamePrefix + " " + env.BRANCH_NAME.replaceAll("/(.*)", "") + " " + env.sonarProjectNameSuffix
-              env.sonarProjectKey = env.sonarProjectKeyPrefix + "-" + env.BRANCH_NAME.replaceAll("/(.*)", "")
+              env.sonarProjectName = env.component + " " + env.BRANCH_NAME.replaceAll("/(.*)", "") + " " + env.sonarProjectNameSuffix
+              env.sonarProjectKey = env.component + "-" + env.BRANCH_NAME.replaceAll("/(.*)", "")
 
               if (env.BRANCH_NAME == "develop") {
                   env.version = env.version + "-snapshot"
               }
 
+              env.image = "${dockerRegistry}/${dockerRepo}/${project}/${component}:${env.version}"
               echo "Project version: ${version}"
           }
 
@@ -60,28 +58,25 @@ pipeline {
         }
       }
 
-      // Unit tests (vitest + jsdom) of both Angular apps, in a throwaway Node container.
+      // Unit tests (vitest + jsdom) in a throwaway Node container.
       // Runs as the agent's user so the files it leaves in the workspace can be deleted afterwards.
       stage('Unit Tests') {
         steps {
-          script {
-            for (app in env.apps.split(' ')) {
-              sh """docker run --rm --user \$(id -u):\$(id -g) \
-                 -e HOME=/tmp -e CI=true \
-                 -e HTTP_PROXY='${httpProxy}' -e HTTPS_PROXY='${httpsProxy}' -e NO_PROXY='${noProxy}' \
-                 -v "\$PWD/${app}":/app -w /app node:24-alpine \
-                 sh -c 'npm ci --ignore-scripts --no-audit --no-fund && npx ng test --watch=false'"""
-            }
-          }
+          sh """docker run --rm --user \$(id -u):\$(id -g) \
+             -e HOME=/tmp -e CI=true \
+             -e HTTP_PROXY='${httpProxy}' -e HTTPS_PROXY='${httpsProxy}' -e NO_PROXY='${noProxy}' \
+             -v "\$PWD/${component}":/app -w /app node:24-alpine \
+             sh -c 'npm ci --ignore-scripts --no-audit --no-fund && npx ng test --watch=false'"""
         }
       }
 
+      // Settings in ${component}/sonar-project.properties
       stage('Sonar') {
         steps {
           sh """docker run --rm --user \$(id -u):\$(id -g) \
              -e SONAR_HOST_URL='${sonarUrl}' -e SONAR_TOKEN \
              -e SONAR_SCANNER_OPTS='-Dhttp.proxyHost=proxy.multicert.dev -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.multicert.dev -Dhttps.proxyPort=8080 -Dhttp.nonProxyHosts=localhost|*.multicert.dev|*.dev.multicert.com|*.multicert.inet' \
-             -v "\$PWD":/usr/src sonarsource/sonar-scanner-cli \
+             -v "\$PWD/${component}":/usr/src sonarsource/sonar-scanner-cli \
              -Dsonar.projectKey='${env.sonarProjectKey}' \
              -Dsonar.projectName='${env.sonarProjectName}' \
              -Dsonar.projectVersion='${env.versionSonar}' \
@@ -92,14 +87,10 @@ pipeline {
       stage('Build Docker') {
         steps {
           sh "echo version: ${version}"
-          script {
-            for (image in env.images.split(' ')) {
-              sh "docker build --build-arg HTTP_PROXY='${httpProxy}' \
-                 --build-arg HTTPS_PROXY='${httpsProxy}' \
-                 --build-arg NO_PROXY='${noProxy}' \
-                 ${image} -t ${dockerRegistry}/${dockerRepo}/${project}/${image}:${version}"
-            }
-          }
+          sh "docker build --build-arg HTTP_PROXY='${httpProxy}' \
+             --build-arg HTTPS_PROXY='${httpsProxy}' \
+             --build-arg NO_PROXY='${noProxy}' \
+             ${component} -t ${image}"
         }
       }
 
@@ -107,11 +98,7 @@ pipeline {
         steps {
             withDockerRegistry([url: "http://${dockerRegistry}", credentialsId: 'nexus-credentials'])
             {
-                script {
-                  for (image in env.images.split(' ')) {
-                    sh "docker push ${dockerRegistry}/${dockerRepo}/${project}/${image}:${version}"
-                  }
-                }
+                sh "docker push ${image}"
             }
         }
       }
@@ -124,11 +111,7 @@ pipeline {
           }
         }
           steps {
-              script {
-                for (image in env.images.split(' ')) {
-                  build job: env.deployDevJob, wait: true, parameters:[string(name: 'REQUESTED_ACTION', value: image)]
-                }
-              }
+              build job: env.deployDevJob, wait: true, parameters:[string(name: 'REQUESTED_ACTION', value: env.component)]
           }
       }
     }
@@ -136,10 +119,10 @@ pipeline {
 
     post {
         always {
-            // remove the images built here, then the workspace
+            // remove the image built here, then the workspace
             script {
-              for (image in env.images.split(' ')) {
-                sh "docker image rm ${dockerRegistry}/${dockerRepo}/${project}/${image}:${version} || true"
+              if (env.image) {
+                sh "docker image rm ${env.image} || true"
               }
             }
             deleteDir()

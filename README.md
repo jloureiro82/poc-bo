@@ -55,6 +55,13 @@ docker compose push
 Each image can also be built on its own: `docker build -t workflow-manager-ui ./workflow-manager-ui` (and the same for
 the other two folders).
 
+### CI
+
+Each component has its own Jenkins pipeline in `<component>/ci/Jenkinsfile`: tests (apps only), Sonar, image build
+and push, and the DEV deploy on `develop`. Set each one up as its own multibranch job on this repository, with that
+file as the Script Path. Each image has its own version: `version` in the app's `package.json`, or
+`configurator-portal/VERSION`.
+
 ### Security
 
 Tokens stay on the server: each app's nginx adds its own token to the calls it forwards, and the browser never sees
