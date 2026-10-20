@@ -90,7 +90,8 @@ Implemented in `src/app/core/workflow-validator.ts`.
 | Labels are unique across the workflow | executions are hard to tell apart otherwise | ▲ |
 | `type` is required and known: `simple`, `simpleThreadPool`, `async`, `multiStage`, `multiStepThreadPool`, `logical`, `decision`, `for`, `manual`, `subFlow`, `terminate`, `validate` | the dispatcher is chosen by type (`subFlow` and `terminate` are matched case-insensitively) | ✖ |
 | `parallel` is **not used** ★ | team rule | ✖ |
-| `retry` is a whole number ≥ 0 | | ✖ |
+| `retry` is a whole number ≥ 0, as a number or as text (`"6"`) | workflow-core `SimpleTaskExecution.getRetry` parses both | ✖ |
+| `retryDelay`, `retryDelayMillis` are whole numbers **written as text** (`"1000"`) | `getRetryDelay` casts the value to `String` before parsing, so a bare number fails. Only the jms and kafka messengers wait the delay. | ✖ |
 | Logical tasks do not set `retry` ★ | re-evaluating the same expression gives the same result | ▲ |
 | `tasks` on a type that ignores it | | ▲ |
 
@@ -113,6 +114,10 @@ Implemented in `src/app/core/workflow-validator.ts`.
 | `logical` | `expression` is required | `LogicalTask` | ✖ |
 | `http` | `inputParameters` is an object with `url` (direct mode). `httpMethod` ∈ `GET`, `POST`, `PUT`, `PATCH`, `DELETE` (default POST; `HttpMethod.valueOf` throws on others). `headers` is an object. | workflow-core `Http.handle` | ✖ |
 | `http` | **Route mode**: `inputParameters.endpoint` is a route **name** from `workflowengine.endpoints.routes`. `url`, `httpMethod` and `headers` are then ignored (▲). | `Http.handle` | ✖ / ▲ |
+| `http` | `successCondition` is **one** `${…}` with nothing around it, e.g. `${statusCode == 200}`. It is evaluated on `{ statusCode, body` or `rawBody, headers }`. Any other text (plain `true`, `statusCode == 200`, `${a} ${b}`, an empty string) is a template that yields a string, which counts as false, so the task always fails. | `Http.successConditionMethod` | ✖ |
+| `http` | a `successCondition` that is not text is ignored, but its presence still turns 4xx/5xx into results: every response then counts as a success | `Http.handle` | ▲ |
+| `http` | `errorHandler` is a boolean (default true). `false` stops 4xx/5xx from being errors: without a `successCondition` they count as success (▲). With one, it judges every response anyway, so `errorHandler` has no effect (i). | `Http.handle` | ✖ / ▲ / i |
+| `http` | `instantFailureCondition` is a `${…}` expression or a boolean (✖). It is checked on the same response when the call fails (error status, timeout, false `successCondition`); true fails the task without the remaining retries. Text that is not one `${…}` never applies (▲); without `retry` there is nothing to skip (i). | `SimpleWorker.getFailureCondition`, `TaskExecutionErrorHandler` | ✖ / ▲ / i |
 | `notification` | `notificationType` ∈ `email`, `sms`; `template` is required | `NotificationTask` | ✖ |
 | `notification` (email) | `emailTo` is a non-empty list (✖); empty `emailFrom` or `subject` (▲) | `NotificationTask.sendMail` | |
 | `notification` (sms) | `phoneNumber` is required | `NotificationTask.sendSMS` | ✖ |
@@ -122,8 +127,9 @@ Implemented in `src/app/core/workflow-validator.ts`.
 | `mapResolver` (inline map) | no more keys than the map has levels; every final value is a string | `MapResolver.handle` | ✖ |
 | `mapResolver` (inline map) | no `DEFAULT` at the first level: an unmatched key fails the task | `MapResolver.resolveMap` | i |
 
-`successCondition` and `rawRequest` belong on the **task**, not in `inputParameters`. That is where `Http.handle`
-reads them.
+`successCondition`, `errorHandler`, `instantFailureCondition` and `rawRequest` belong on the **task**, not in
+`inputParameters`. That is where `Http.handle` and `SimpleWorker` read them. `retryDelayMillis` and
+`retryDelayFactor` are read by `SimpleTaskExecution` but used nowhere, so the editor does not offer them.
 
 ---
 

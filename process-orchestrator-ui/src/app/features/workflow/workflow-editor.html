@@ -187,7 +187,15 @@
                             hint="Values can be expressions." (valueChange)="patchHttp('body', $event)" />
             <label class="field"><span>Success condition</span>
               <textarea [attr.data-field-sev]="fieldSev('successCondition')" [attr.aria-invalid]="fieldSev('successCondition') === 'error' || null" autoGrow singleLine rows="1" spellcheck="false" [value]="$any(t['successCondition']) ?? ''" (input)="patchTask('successCondition', value($event))"></textarea>
-              <small class="muted">Evaluated against the response; false makes the task fail.</small>
+              <small class="muted">One ${{ '{' }}…{{ '}' }} on the response (statusCode, body or rawBody, headers), e.g. ${{ '{' }}statusCode == 200{{ '}' }}. False fails the task. When set, it also judges 4xx/5xx responses.</small>
+            </label>
+            <label class="check">
+              <input [attr.data-field-sev]="fieldSev('errorHandler')" [attr.aria-invalid]="fieldSev('errorHandler') === 'error' || null" type="checkbox" [checked]="t['errorHandler'] !== false" (change)="patchTask('errorHandler', checked($event) ? undefined : false)" />
+              4xx/5xx responses fail the task (errorHandler; only without a success condition)
+            </label>
+            <label class="field"><span>Instant failure condition</span>
+              <textarea [attr.data-field-sev]="fieldSev('instantFailureCondition')" [attr.aria-invalid]="fieldSev('instantFailureCondition') === 'error' || null" autoGrow singleLine rows="1" spellcheck="false" [value]="$any(t['instantFailureCondition']) ?? ''" placeholder="${{ '{' }}statusCode == 400}" (input)="patchInstantFailure(value($event))"></textarea>
+              <small class="muted">Checked when the call fails (error status, timeout, false success condition), on the same response fields. True fails the task without the remaining retries. Also takes true or false.</small>
             </label>
             <label class="check">
               <input [attr.data-field-sev]="fieldSev('rawRequest')" [attr.aria-invalid]="fieldSev('rawRequest') === 'error' || null" type="checkbox" [checked]="t['rawRequest'] === true" (change)="patchTask('rawRequest', checked($event) || undefined)" />
@@ -306,9 +314,15 @@
                                   (pick)="addTask([...selectedPathParts(), 'tasks'], $event)" />
         }
         @if (!isLogicalTask(t)) {
-          <label class="field"><span>Retry</span>
-            <input [attr.data-field-sev]="fieldSev('retry')" [attr.aria-invalid]="fieldSev('retry') === 'error' || null" type="number" min="0" [value]="t.retry ?? ''" (input)="patchTask('retry', numberOrUndefined($event))" />
-          </label>
+          <div class="grid2">
+            <label class="field"><span>Retry</span>
+              <input [attr.data-field-sev]="fieldSev('retry')" [attr.aria-invalid]="fieldSev('retry') === 'error' || null" type="number" min="0" [value]="t.retry ?? ''" (input)="patchTask('retry', numberOrUndefined($event))" />
+            </label>
+            <label class="field"><span>Retry delay (ms)</span>
+              <input [attr.data-field-sev]="fieldSev('retryDelay')" [attr.aria-invalid]="fieldSev('retryDelay') === 'error' || null" inputmode="numeric" [value]="$any(t['retryDelay']) ?? ''" (input)="patchTask('retryDelay', value($event))" />
+            </label>
+          </div>
+          <small class="muted">The jms and kafka messengers wait the delay before each retry; sync retries at once.</small>
         }
         <app-json-field [attr.data-field-sev]="fieldSev('failureOutputParameters')" label="Failure output parameters" [rows]="3" [value]="t.failureOutputParameters"
                         (valueChange)="patchTask('failureOutputParameters', $event)" />

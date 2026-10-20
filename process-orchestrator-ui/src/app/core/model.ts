@@ -80,7 +80,7 @@ export interface TaskConfig {
   component?: string;
   description?: string;
   expression?: string;
-  retry?: number;
+  retry?: number | string;
   tasks?: TaskConfig[];
   cases?: DecisionCase[];
   default?: { tasks?: TaskConfig[]; [key: string]: unknown };

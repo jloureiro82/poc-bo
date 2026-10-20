@@ -798,6 +798,11 @@ export class WorkflowEditor {
     this.patchTask([], next);
   }
 
+  /** `instantFailureCondition` takes a `${...}` expression or a boolean, so typed true/false are stored as booleans. */
+  protected patchInstantFailure(text: string): void {
+    this.patchTask('instantFailureCondition', text === 'true' ? true : text === 'false' ? false : text);
+  }
+
   protected httpInput(task: TaskConfig): Record<string, unknown> {
     return isObject(task.inputParameters) ? task.inputParameters : {};
   }

@@ -166,6 +166,48 @@ describe('validateWorkflow', () => {
     expect(messages(errors(http({ endpoint: { url: 'https://x' } })))).toContain('must be the name of a configured route');
   });
 
+  it('mirrors how the http handler judges the response: successCondition, errorHandler, instantFailureCondition', () => {
+    const http = (extra: Record<string, unknown>) =>
+      validateWorkflow(wf([{ label: 'h', type: 'simple', component: 'http', inputParameters: { url: 'https://x', headers: {} }, ...extra }]));
+    const infos = (issues: Issue[]) => issues.filter(i => i.severity === 'info');
+
+    expect(messages(http({ successCondition: '${statusCode == 200}', retry: 2, instantFailureCondition: '${statusCode == 400}' }))).toBe('');
+    expect(messages(http({ successCondition: "${statusCode == 200 || body['a'] == '}'}" }))).toBe('');
+    // Only a single ${...} yields a boolean; anything else is a string, which the handler treats as false.
+    for (const text of ['statusCode == 200', 'true', '', ' ${true}', '${a} ${b}', '${a} == 1']) {
+      expect(messages(errors(http({ successCondition: text })))).toContain('tasks[0].successCondition: successCondition must be one ${...} expression');
+    }
+    expect(messages(warnings(http({ successCondition: true })))).toContain('tasks[0].successCondition: successCondition is ignored unless it is text');
+
+    expect(messages(errors(http({ errorHandler: 'false' })))).toContain('tasks[0].errorHandler: errorHandler must be true or false');
+    expect(messages(warnings(http({ errorHandler: false })))).toContain('4xx and 5xx responses count as success');
+    expect(messages(infos(http({ errorHandler: false, successCondition: '${true}' })))).toContain('errorHandler has no effect here');
+    expect(messages(http({ errorHandler: true }))).toBe('');
+
+    expect(messages(errors(http({ instantFailureCondition: 1 })))).toContain('tasks[0].instantFailureCondition: instantFailureCondition must be');
+    expect(messages(warnings(http({ instantFailureCondition: 'statusCode == 400', retry: 1 })))).toContain('so it never applies');
+    expect(messages(infos(http({ instantFailureCondition: true })))).toContain('this task has no retry');
+    expect(messages(http({ instantFailureCondition: true, retry: '3' }))).toBe('');
+  });
+
+  it('checks retry and retryDelay as workflow-core reads them', () => {
+    const issues = validateWorkflow(
+      wf([
+        { label: 'a', type: 'manual', retry: -1 },
+        { label: 'b', type: 'manual', retry: '3', retryDelay: 1000 },
+        { label: 'c', type: 'manual', retry: 'x', retryDelay: 'soon' },
+        { label: 'd', type: 'manual', retry: 2, retryDelay: '1000', retryDelayMillis: '250' },
+      ]),
+    );
+    const text = messages(errors(issues));
+    expect(text).toContain('tasks[0].retry: retry must be a whole number >= 0');
+    expect(text).not.toContain('tasks[1].retry:');
+    expect(text).toContain('tasks[1].retryDelay: retryDelay must be text holding milliseconds');
+    expect(text).toContain('tasks[2].retry: retry must be a whole number >= 0');
+    expect(text).toContain('tasks[2].retryDelay: retryDelay must be a whole number of milliseconds');
+    expect(text).not.toContain('tasks[3]');
+  });
+
   it('warns when a logical task sets retry', () => {
     const issues = validateWorkflow(wf([{ label: 'l', type: 'simple', component: 'logical', expression: '${true}', retry: 0 }]));
     expect(messages(warnings(issues))).toContain('tasks[0].retry: Logical tasks should not set retry');

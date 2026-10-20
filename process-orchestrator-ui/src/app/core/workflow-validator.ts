@@ -1,5 +1,5 @@
 import { Issue, IssueCollector } from './issues';
-import { findSpelProblems } from './spel';
+import { findSpelProblems, isSingleSpelExpression } from './spel';
 import { JsonPath, isObject } from './json-path';
 import { KNOWN_COMPONENTS, NOTIFICATION_TYPES, TASK_TYPES, WORKER_TASK_TYPES } from './model';
 import { ValidationContext } from './orchestrator-validator';
@@ -114,11 +114,7 @@ function validateTask(
     c.error(tp, `Unknown task type "${String(type)}" (known: ${TASK_TYPES.join(', ')})`, 'type');
   }
 
-  if (task['retry'] != null && !(Number.isInteger(task['retry']) && (task['retry'] as number) >= 0)) {
-    c.error(tp, 'retry must be a whole number >= 0', 'retry');
-  } else if (task['retry'] != null && isLogicalTask(task)) {
-    c.warn(tp, 'Logical tasks should not set retry: re-evaluating the same expression gives the same result', 'retry');
-  }
+  validateRetry(c, task, tp);
 
   // Every ${...} anywhere in the task (child task lists are checked as tasks of their own).
   const childKeys = ['decision', 'for', 'parallel'].includes(type as string) ? ['tasks', 'cases', 'default'] : [];
@@ -162,6 +158,31 @@ function validateTask(
   }
 }
 
+/**
+ * workflow-core `SimpleTaskExecution.getRetry` accepts a number or digits as text. `getRetryDelay` /
+ * `getRetryDelayMillis` cast to `String` before parsing, so those two must be text.
+ */
+function validateRetry(c: IssueCollector, task: Record<string, unknown>, tp: JsonPath): void {
+  const retry = task['retry'];
+  const wholeNumber = (v: unknown) => (Number.isInteger(v) && (v as number) >= 0) || (typeof v === 'string' && /^\d+$/.test(v));
+  if (retry != null && !wholeNumber(retry)) {
+    c.error(tp, 'retry must be a whole number >= 0', 'retry');
+  } else if (retry != null && isLogicalTask(task)) {
+    c.warn(tp, 'Logical tasks should not set retry: re-evaluating the same expression gives the same result', 'retry');
+  }
+  for (const key of ['retryDelay', 'retryDelayMillis']) {
+    const delay = task[key];
+    if (delay == null) {
+      continue;
+    }
+    if (typeof delay !== 'string') {
+      c.error(tp, `${key} must be text holding milliseconds, e.g. "1000": the engine fails on a bare number`, key);
+    } else if (!/^\d+$/.test(delay) && !delay.includes('${')) {
+      c.error(tp, `${key} must be a whole number of milliseconds, written as text`, key);
+    }
+  }
+}
+
 /** `subFlow` and `terminate` are matched case-insensitively by workflow-core, every other type exactly. */
 function isKnownTaskType(type: unknown): boolean {
   if (typeof type !== 'string') {
@@ -185,6 +206,7 @@ function validateComponent(c: IssueCollector, task: Record<string, unknown>, tp:
   }
   if (component === 'http') {
     validateHttp(c, task, tp);
+    validateHttpOutcome(c, task, tp);
   }
   if (component === 'notification') {
     const notificationType = task['notificationType'];
@@ -294,6 +316,52 @@ function validateHttp(c: IssueCollector, task: Record<string, unknown>, tp: Json
   }
   if (input['headers'] != null && !isObject(input['headers'])) {
     c.error(tp, 'inputParameters.headers must be a JSON object', 'inputParameters.headers');
+  }
+}
+
+/**
+ * How workflow-core `Http.handle` and `SimpleWorker` judge the response `{ statusCode, body | rawBody, headers }`.
+ * - `successCondition` is read only when it is text. Once the key is there, 4xx/5xx responses go to it too instead of
+ *   failing the task, so a non-text value lets every response through.
+ * - `errorHandler: false` stops 4xx/5xx from being errors. It matters only without a successCondition.
+ * - `instantFailureCondition` (text or true/false) is checked when the call fails; true skips the remaining retries.
+ * A condition must be one `${...}`: text around it makes the template a string, which counts as false.
+ */
+function validateHttpOutcome(c: IssueCollector, task: Record<string, unknown>, tp: JsonPath): void {
+  const success = task['successCondition'];
+  if (success != null && typeof success !== 'string') {
+    c.warn(tp, 'successCondition is ignored unless it is text, and then every response counts as a success, 4xx and 5xx included', 'successCondition');
+  } else if (typeof success === 'string' && !isSingleSpelExpression(success)) {
+    c.error(
+      tp,
+      'successCondition must be one ${...} expression with nothing around it, e.g. ${statusCode == 200}: anything else is text, which counts as false, so the task always fails',
+      'successCondition',
+    );
+  }
+
+  const errorHandler = task['errorHandler'];
+  if (errorHandler != null && typeof errorHandler !== 'boolean') {
+    c.error(tp, 'errorHandler must be true or false', 'errorHandler');
+  } else if (errorHandler === false && typeof success !== 'string') {
+    c.warn(tp, 'errorHandler is false and there is no successCondition, so 4xx and 5xx responses count as success', 'errorHandler');
+  } else if (errorHandler != null && typeof success === 'string') {
+    c.info(tp, 'errorHandler has no effect here: the successCondition judges every response, 4xx and 5xx included', 'errorHandler');
+  }
+
+  const instant = task['instantFailureCondition'];
+  if (instant == null) {
+    return;
+  }
+  if (typeof instant !== 'string' && typeof instant !== 'boolean') {
+    c.error(tp, 'instantFailureCondition must be a ${...} expression, or true or false', 'instantFailureCondition');
+  } else if (typeof instant === 'string' && !isSingleSpelExpression(instant)) {
+    c.warn(
+      tp,
+      'instantFailureCondition must be one ${...} expression with nothing around it: anything else is text, which counts as false, so it never applies',
+      'instantFailureCondition',
+    );
+  } else if (!(Number(task['retry']) > 0)) {
+    c.info(tp, 'instantFailureCondition only skips retries, and this task has no retry', 'instantFailureCondition');
   }
 }
 

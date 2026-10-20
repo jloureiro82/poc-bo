@@ -43,6 +43,18 @@ export function checkSpelTemplate(text: string): SpelProblem[] {
   return problems;
 }
 
+/**
+ * Whether the whole text is one `${...}` with nothing around it. Only then does the template give the expression's own
+ * value (a boolean, say). Text around it, or a second `${...}`, makes the result a string.
+ */
+export function isSingleSpelExpression(text: string): boolean {
+  if (!text.startsWith('${')) {
+    return false;
+  }
+  const end = findTemplateEnd(text, 2);
+  return !end.error && end.offset === text.length - 1;
+}
+
 /** Like Spring's `skipToCorrectEndSuffix`: matches (), [], {} and skips '...' / "..." literals. */
 function findTemplateEnd(text: string, from: number): { offset: number; error?: string } {
   const stack: { ch: string; at: number }[] = [];
