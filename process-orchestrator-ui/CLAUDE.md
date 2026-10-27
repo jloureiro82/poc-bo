@@ -78,6 +78,9 @@ These were confirmed with the user, or by reading the engine. Do not reverse the
 - The **`parallel`** task type is not used (it is flagged as an error).
 - **HTTP tasks**: `inputParameters.{url, httpMethod, headers, body}`, or `inputParameters.endpoint` = the *name* of a
   configured route. `successCondition` and `rawRequest` sit on the task itself.
+  A condition must be **one** `${…}` (text around it makes a string, which counts as false). `errorHandler: false`
+  stops 4xx/5xx from failing the task, and matters only without a successCondition. `instantFailureCondition`
+  (`${…}` or a boolean) skips the remaining retries when the call fails.
 - **mapResolver**: `keys` = `{key1, key2, …}` (ordered by the number in the name); `map` = a nested object **or** a
   `${…}` expression.
 - **Decision**: `cases: [{key, tasks}]`; `default` is optional.

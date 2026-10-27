@@ -116,6 +116,9 @@ These were confirmed by reading the engine or by running the service. Do not rev
 - **HTTP tasks**: `inputParameters.{url, httpMethod, headers, body}`, or `inputParameters.endpoint` = the *name* of a
   configured route. In URL mode `headers` is required (it may be `{}`). `successCondition` and `rawRequest` sit on the
   task itself.
+  A condition must be **one** `${…}` (text around it makes a string, which counts as false). `errorHandler: false`
+  stops 4xx/5xx from failing the task, and matters only without a successCondition. `instantFailureCondition`
+  (`${…}` or a boolean) skips the remaining retries when the call fails.
 - **`retry`** may be a number or digits as text. **`retryDelay` must be text** (`"1000"`).
 - **mapResolver**: `keys` = `{key1, key2, …}` (ordered by the number in the name); `map` = a nested object **or** a
   `${…}` expression.
