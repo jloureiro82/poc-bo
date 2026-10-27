@@ -6,6 +6,7 @@ import { describeHttpError } from '../../core/config-api.service';
 import { FieldChange, diffValues, diffWorkflows, preview } from '../../core/diff';
 import { TaskRun, WorkflowRun, compareTaskRuns, durationMs, formatDuration, runStatusOf } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
+import { CopyId } from '../../shared/copy-id';
 
 interface Side {
   run: WorkflowRun;
@@ -15,7 +16,7 @@ interface Side {
 /** Two runs side by side: outcome, timing, task by task, and what differs in their input, output and definition. */
 @Component({
   selector: 'app-execution-compare',
-  imports: [DatePipe, NgTemplateOutlet, RouterLink],
+  imports: [CopyId, DatePipe, NgTemplateOutlet, RouterLink],
   template: `
     <div class="page execution compare">
       <header class="toolbar">
@@ -40,7 +41,7 @@ interface Side {
               <tr>
                 <th>Run</th>
                 @for (s of sides(); track $index) {
-                  <td><a [routerLink]="['/executions', s.run.workflowId]"><strong>{{ s.run.name }}</strong></a><br /><code class="muted small">{{ s.run.workflowId }}</code></td>
+                  <td><a [routerLink]="['/executions', s.run.workflowId]"><strong>{{ s.run.name }}</strong></a><br /><app-copy-id class="muted small" [value]="s.run.workflowId" /></td>
                 }
               </tr>
               <tr>

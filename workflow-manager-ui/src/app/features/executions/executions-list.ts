@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { ConfigApiService, describeHttpError } from '../../core/config-api.service';
 import { RunStatus, RunSummary, TaskRun, WORKFLOW_STATUSES, WorkflowRun, durationMs, formatDuration, runStatusOf, summarizeRuns } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
+import { CopyId } from '../../shared/copy-id';
 
 const PAGE_SIZE = 25;
 /** How many of a workflow's latest runs the health summary covers. */
@@ -12,7 +13,7 @@ const HEALTH_RUNS = 50;
 
 @Component({
   selector: 'app-executions-list',
-  imports: [DatePipe, RouterLink],
+  imports: [CopyId, DatePipe, RouterLink],
   template: `
     <div class="page">
       <header class="toolbar">
@@ -109,7 +110,7 @@ const HEALTH_RUNS = 50;
                 <td>{{ (r.startTime ?? r.createTime) | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
                 <td>{{ duration(r) }}</td>
                 <td>{{ r.messengerProvider ?? '—' }}</td>
-                <td><code class="muted">{{ r.workflowId }}</code></td>
+                <td><app-copy-id class="muted" [value]="r.workflowId" /></td>
               </tr>
             } @empty {
               @if (!loading()) {

@@ -35,7 +35,7 @@
       <div><span class="muted small">Ended</span><strong>{{ r.endTime ? (r.endTime | date: 'yyyy-MM-dd HH:mm:ss.SSS') : '—' }}</strong></div>
       <div><span class="muted small">Duration</span><strong>{{ duration(r.startTime ?? r.createTime, r.endTime) }}</strong></div>
       <div><span class="muted small">Task executions</span><strong>{{ tasks().length }}</strong></div>
-      <div class="grow"><span class="muted small">Execution id</span><code>{{ r.workflowId }}</code></div>
+      <div class="grow"><span class="muted small">Execution id</span><app-copy-id [value]="r.workflowId" /></div>
     </div>
 
     @if (r.error.length) {
@@ -128,7 +128,7 @@
             @if (selectedRuns() > 1) { · executed {{ selectedRuns() }} times in this run }
           </span>
         </div>
-        <p class="small"><span class="muted">Task id</span> <code>{{ t.taskId }}</code></p>
+        <p class="small"><span class="muted">Task id</span> <app-copy-id [value]="t.taskId" /></p>
         @if (selectedTrace(); as trace) {
           <div class="io">
             <details open>

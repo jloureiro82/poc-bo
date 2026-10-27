@@ -4052,6 +4052,46 @@ app-overview.showcase code {
   letter-spacing: normal;
 }
 
+/* Click-to-copy ids (CopyId) */
+:root button.copy-id {
+  position: relative;
+  display: inline-block;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: copy;
+  text-align: left;
+}
+:root button.copy-id:hover:not(:disabled) {
+  background: transparent;
+  color: var(--accent);
+}
+:root button.copy-id:hover code {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.copy-id-hint {
+  position: absolute;
+  left: 100%;
+  margin-left: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  font-size: 11px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+button.copy-id:hover .copy-id-hint,
+button.copy-id:focus-visible .copy-id-hint,
+button.copy-id.copied .copy-id-hint {
+  opacity: 1;
+}
+button.copy-id.copied .copy-id-hint {
+  color: var(--run-ok);
+}
+
 /* Last on purpose: the `font` shorthand on form controls (above) resets ligature settings, so this must come after it.
    Shows != and >= as typed, not as glyphs (Cascadia/JetBrains Mono draw them via ligatures/contextual alternates). */
 code,

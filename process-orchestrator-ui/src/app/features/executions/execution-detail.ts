@@ -17,6 +17,7 @@ import {
   runStatusOf,
 } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
+import { CopyId } from '../../shared/copy-id';
 import { OrchestratorConfig } from '../../core/model';
 import { RunInput, startInputOf } from '../../core/run-input';
 import { exportDiagram } from '../../shared/diagram-export';
@@ -38,7 +39,7 @@ interface TimelineRow {
 
 @Component({
   selector: 'app-execution-detail',
-  imports: [DatePipe, JsonPipe, RouterLink, OrchestratorDiagram, KeyActivate, RunDialog],
+  imports: [CopyId, DatePipe, JsonPipe, RouterLink, OrchestratorDiagram, KeyActivate, RunDialog],
   templateUrl: './execution-detail.html',
 })
 export class ExecutionDetail {

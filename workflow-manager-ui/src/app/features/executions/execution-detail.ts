@@ -6,6 +6,7 @@ import { ConfigApiService, describeHttpError } from '../../core/config-api.servi
 import { queueOpen } from '../../core/drafts';
 import { TaskRun, WorkflowRun, buildTaskOverlay, durationMs, findTaskTrace, formatDuration, inRunOrder, retryRefusal, runStatusOf } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
+import { CopyId } from '../../shared/copy-id';
 import { Severity } from '../../core/issues';
 import { getAt, isObject, parsePath } from '../../core/json-path';
 import { WorkflowDefinition } from '../../core/model';
@@ -17,7 +18,7 @@ import { FlowItem, TaskFlow } from '../workflow/task-flow';
 
 @Component({
   selector: 'app-execution-detail',
-  imports: [DatePipe, JsonPipe, RouterLink, TaskFlow, KeyActivate, RunDialog],
+  imports: [CopyId, DatePipe, JsonPipe, RouterLink, TaskFlow, KeyActivate, RunDialog],
   templateUrl: './execution-detail.html',
 })
 export class ExecutionDetail {

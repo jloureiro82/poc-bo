@@ -29,7 +29,7 @@
       <div><span class="muted small">Ended</span><strong>{{ f.endDate ? (f.endDate | date: 'yyyy-MM-dd HH:mm:ss.SSS') : '—' }}</strong></div>
       <div><span class="muted small">Duration</span><strong>{{ duration(f.startDate, f.endDate) }}</strong></div>
       <div><span class="muted small">Activity runs</span><strong>{{ runs().length }}</strong></div>
-      <div class="grow"><span class="muted small">Execution id</span><code>{{ f.orchestratorId }}</code></div>
+      <div class="grow"><span class="muted small">Execution id</span><app-copy-id [value]="f.orchestratorId" /></div>
     </div>
 
     <!-- 1. The flow as configured, coloured by what happened ------------------------------------------------>
@@ -107,7 +107,7 @@
           <p class="small">
             Workflow <strong>{{ wf.label }}</strong>
             <span class="pill run" [attr.data-run]="runStatusOf(wf.status)">{{ statusText(wf.status) }}</span>
-            <code class="muted">{{ wf.workflowId }}</code>
+            <app-copy-id class="muted" [value]="wf.workflowId" />
           </p>
 
           @if (wf.error?.length) {

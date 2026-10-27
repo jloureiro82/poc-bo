@@ -6,6 +6,7 @@ import { describeHttpError } from '../../core/config-api.service';
 import { FieldChange, diffValues, preview } from '../../core/diff';
 import { ActivityRun, FlowTrace, StepTrace, WorkflowRun, compareActivityRuns, durationMs, formatDuration, runStatusOf } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
+import { CopyId } from '../../shared/copy-id';
 import { startInputOf } from '../../core/run-input';
 
 interface Side {
@@ -18,7 +19,7 @@ interface Side {
 /** Two flows side by side: outcome, timing, activity by activity, and what differs in their request and response. */
 @Component({
   selector: 'app-execution-compare',
-  imports: [DatePipe, NgTemplateOutlet, RouterLink],
+  imports: [CopyId, DatePipe, NgTemplateOutlet, RouterLink],
   template: `
     <div class="page execution compare">
       <header class="toolbar">
@@ -43,7 +44,7 @@ interface Side {
               <tr>
                 <th>Run</th>
                 @for (s of sides(); track $index) {
-                  <td><a [routerLink]="['/executions', s.flow.orchestratorId]"><strong>{{ s.flow.flowName }}</strong></a><br /><code class="muted small">{{ s.flow.orchestratorId }}</code></td>
+                  <td><a [routerLink]="['/executions', s.flow.orchestratorId]"><strong>{{ s.flow.flowName }}</strong></a><br /><app-copy-id class="muted small" [value]="s.flow.orchestratorId" /></td>
                 }
               </tr>
               <tr>

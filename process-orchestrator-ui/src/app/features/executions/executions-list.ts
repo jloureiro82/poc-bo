@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { ConfigApiService, describeHttpError, toStored } from '../../core/config-api.service';
 import { ActivityRun, FLOW_STATUSES, FlowSummary, FlowTrace, RunStatus, WorkflowRun, durationMs, formatDuration, runStatusOf, summarizeFlows } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
+import { CopyId } from '../../shared/copy-id';
 
 const PAGE_SIZE = 25;
 /** How many of a flow's latest runs the health summary covers. */
@@ -12,7 +13,7 @@ const HEALTH_RUNS = 50;
 
 @Component({
   selector: 'app-executions-list',
-  imports: [DatePipe, RouterLink],
+  imports: [CopyId, DatePipe, RouterLink],
   template: `
     <div class="page">
       <header class="toolbar">
@@ -109,7 +110,7 @@ const HEALTH_RUNS = 50;
                 <td>{{ f.startDate | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
                 <td>{{ duration(f) }}</td>
                 <td>{{ (f.stepCount ?? 0) + 1 }}</td>
-                <td><code class="muted">{{ f.orchestratorId }}</code></td>
+                <td><app-copy-id class="muted" [value]="f.orchestratorId" /></td>
               </tr>
             } @empty {
               @if (!loading()) {
