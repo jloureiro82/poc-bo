@@ -1,10 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ConfigApiService, describeHttpError, toStored } from '../../core/config-api.service';
 import { ActivityRun, FLOW_STATUSES, FlowSummary, FlowTrace, RunStatus, WorkflowRun, durationMs, formatDuration, runStatusOf, summarizeFlows } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
+import { fromListParams, rememberListParams, toListParams } from '../../core/list-query';
 import { CopyId } from '../../shared/copy-id';
 
 const PAGE_SIZE = 25;
@@ -135,6 +136,7 @@ export class ExecutionsList {
   private readonly api = inject(ExecutionsApiService);
   private readonly configs = inject(ConfigApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly statuses = FLOW_STATUSES;
   protected readonly items = signal<FlowTrace[]>([]);
@@ -162,7 +164,12 @@ export class ExecutionsList {
   ];
 
   constructor() {
-    void this.reload(0);
+    // Start where the URL says: Back from a run returns to the same page and filters.
+    const query = fromListParams(this.route.snapshot.queryParams, FLOW_STATUSES);
+    this.selected.set(new Set(query.statuses));
+    this.flowName.set(query.name);
+    this.orchestratorId.set(query.id);
+    void this.reload(query.page);
     firstValueFrom(this.configs.list('orchestrator'))
       .then(list => this.flowNames.set([...new Set(list.map(e => toStored('orchestrator', e).name))].sort()))
       .catch(() => undefined);
@@ -189,7 +196,20 @@ export class ExecutionsList {
     } finally {
       this.loading.set(false);
     }
+    this.keepInUrl();
     void this.loadHealth();
+  }
+
+  /** Writes the page and filters into the URL (replacing the entry, so Back still leaves the list in one step). */
+  private keepInUrl(): void {
+    const params = toListParams({
+      page: this.page(),
+      statuses: FLOW_STATUSES.filter(s => this.selected().has(s)),
+      name: this.flowName(),
+      id: this.orchestratorId(),
+    });
+    rememberListParams(params);
+    void this.router.navigate([], { relativeTo: this.route, queryParams: params, replaceUrl: true });
   }
 
   /** The health summary covers one flow, so it shows only when the flow filter is exactly an orchestrator's name. */

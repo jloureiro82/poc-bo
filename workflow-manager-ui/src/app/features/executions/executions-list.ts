@@ -1,10 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ConfigApiService, describeHttpError } from '../../core/config-api.service';
 import { RunStatus, RunSummary, TaskRun, WORKFLOW_STATUSES, WorkflowRun, durationMs, formatDuration, runStatusOf, summarizeRuns } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
+import { fromListParams, rememberListParams, toListParams } from '../../core/list-query';
 import { CopyId } from '../../shared/copy-id';
 
 const PAGE_SIZE = 25;
@@ -135,6 +136,7 @@ export class ExecutionsList {
   private readonly api = inject(ExecutionsApiService);
   private readonly configs = inject(ConfigApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly statuses = WORKFLOW_STATUSES;
   protected readonly items = signal<WorkflowRun[]>([]);
@@ -162,7 +164,12 @@ export class ExecutionsList {
   ];
 
   constructor() {
-    void this.reload(0);
+    // Start where the URL says: Back from a run returns to the same page and filters.
+    const query = fromListParams(this.route.snapshot.queryParams, WORKFLOW_STATUSES);
+    this.selected.set(new Set(query.statuses));
+    this.name.set(query.name);
+    this.workflowId.set(query.id);
+    void this.reload(query.page);
     firstValueFrom(this.configs.list())
       .then(list => this.names.set([...new Set(list.map(w => w.name))].sort()))
       .catch(() => undefined);
@@ -183,7 +190,20 @@ export class ExecutionsList {
     } finally {
       this.loading.set(false);
     }
+    this.keepInUrl();
     void this.loadHealth();
+  }
+
+  /** Writes the page and filters into the URL (replacing the entry, so Back still leaves the list in one step). */
+  private keepInUrl(): void {
+    const params = toListParams({
+      page: this.page(),
+      statuses: WORKFLOW_STATUSES.filter(s => this.selected().has(s)),
+      name: this.name(),
+      id: this.workflowId(),
+    });
+    rememberListParams(params);
+    void this.router.navigate([], { relativeTo: this.route, queryParams: params, replaceUrl: true });
   }
 
   /** The health summary covers one workflow, so it shows only when the name filter is exactly a workflow's name. */

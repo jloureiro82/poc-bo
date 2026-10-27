@@ -6,6 +6,7 @@ import { describeHttpError } from '../../core/config-api.service';
 import { FieldChange, diffValues, preview } from '../../core/diff';
 import { ActivityRun, FlowTrace, StepTrace, WorkflowRun, compareActivityRuns, durationMs, formatDuration, runStatusOf } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
+import { lastListParams } from '../../core/list-query';
 import { CopyId } from '../../shared/copy-id';
 import { startInputOf } from '../../core/run-input';
 
@@ -23,7 +24,7 @@ interface Side {
   template: `
     <div class="page execution compare">
       <header class="toolbar">
-        <h1><a routerLink="/executions" class="back" title="Back to the list">←</a> Compare runs</h1>
+        <h1><a routerLink="/executions" [queryParams]="listParams" class="back" title="Back to the list">←</a> Compare runs</h1>
         <div class="toolbar-actions">
           <button class="ghost" (click)="swap()" title="Swap the two runs">⇄ Swap</button>
           <button class="ghost" (click)="load()" [disabled]="loading()">{{ loading() ? 'Loading…' : '↻ Refresh' }}</button>
@@ -130,6 +131,8 @@ interface Side {
 })
 export class ExecutionCompare {
   private readonly api = inject(ExecutionsApiService);
+  /** The list's page and filters, for the ← link. */
+  protected readonly listParams = lastListParams();
 
   readonly a = input.required<string>();
   readonly b = input.required<string>();

@@ -6,6 +6,7 @@ import { ConfigApiService, describeHttpError } from '../../core/config-api.servi
 import { queueOpen } from '../../core/drafts';
 import { TaskRun, WorkflowRun, buildTaskOverlay, durationMs, findTaskTrace, formatDuration, inRunOrder, retryRefusal, runStatusOf } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
+import { lastListParams } from '../../core/list-query';
 import { CopyId } from '../../shared/copy-id';
 import { Severity } from '../../core/issues';
 import { getAt, isObject, parsePath } from '../../core/json-path';
@@ -23,6 +24,8 @@ import { FlowItem, TaskFlow } from '../workflow/task-flow';
 })
 export class ExecutionDetail {
   private readonly api = inject(ExecutionsApiService);
+  /** The list's page and filters, for the ← link. */
+  protected readonly listParams = lastListParams();
   private readonly configs = inject(ConfigApiService);
   private readonly router = inject(Router);
 

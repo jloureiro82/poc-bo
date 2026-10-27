@@ -1,7 +1,7 @@
 <div class="page execution">
   <header class="toolbar">
     <h1>
-      <a routerLink="/executions" class="back" title="Back to the list">←</a>
+      <a routerLink="/executions" [queryParams]="listParams" class="back" title="Back to the list">←</a>
       {{ run()?.name ?? 'Execution' }}
       @if (run(); as r) {
         <span class="pill run" [attr.data-run]="runStatusOf(r.status)">{{ statusText(r.status) }}</span>

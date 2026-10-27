@@ -17,6 +17,7 @@ import {
   runStatusOf,
 } from '../../core/executions';
 import { ExecutionsApiService } from '../../core/executions-api.service';
+import { lastListParams } from '../../core/list-query';
 import { CopyId } from '../../shared/copy-id';
 import { OrchestratorConfig } from '../../core/model';
 import { RunInput, startInputOf } from '../../core/run-input';
@@ -44,6 +45,8 @@ interface TimelineRow {
 })
 export class ExecutionDetail {
   private readonly api = inject(ExecutionsApiService);
+  /** The list's page and filters, for the ← link. */
+  protected readonly listParams = lastListParams();
   private readonly configs = inject(ConfigApiService);
   private readonly router = inject(Router);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
